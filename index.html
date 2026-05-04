@@ -371,13 +371,21 @@ function allianceOf(party){
 }
 
 /* ---------- Fetch with proxy fallback ---------- */
+// r.jina.ai honours these hints to skip image rendering / return markdown only,
+// which trims the response significantly and shortens proxy latency.
+const JINA_HEADERS = {
+  "Accept": "text/plain, text/html",
+  "x-respond-with": "markdown",
+  "x-with-images-summary": "false",
+  "x-with-links-summary": "false"
+};
 async function fetchHTML(url){
   let lastErr;
   for (const wrap of PROXIES){
     try{
       // cache-buster so we always get fresh data
       const target = wrap(url) + (wrap(url).includes("?") ? "&" : "?") + "_=" + Date.now();
-      const r = await fetch(target, {cache:"no-store", headers:{"Accept":"text/plain, text/html"}});
+      const r = await fetch(target, {cache:"no-store", headers: JINA_HEADERS});
       if (!r.ok) throw new Error("HTTP "+r.status);
       const t = await r.text();
       if (t && t.length > 500) return t;
@@ -768,27 +776,68 @@ function toast(msg, isErr){
   setTimeout(()=>t.classList.remove("show"), 2400);
 }
 
+/* ---------- Cache helpers (sessionStorage warm-start) ---------- */
+const CACHE_KEY = "kerala-eci-2026:cache:v1";
+function loadCache(){
+  try { return JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null"); }
+  catch { return null; }
+}
+function saveCache(data){
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+}
+
 async function refreshAll(){
   document.getElementById("liveStatus").textContent = "REFRESHING";
-  try{
-    const [pwHtml, ...acHtmls] = await Promise.all([
-      fetchHTML(PARTYWISE_URL),
-      ...STATEWISE_PAGES.map(u => fetchHTML(u).catch(()=>""))
-    ]);
-    const pw = parsePartyWise(pwHtml);
-    if (!pw.rows.length) throw new Error("Could not parse party-wise data");
-    renderPartyWise(pw);
 
-    allACs = acHtmls.flatMap(h => h ? parseStatewise(h) : []);
-    // de-duplicate by AC number
-    const seen = new Map();
-    allACs.forEach(r => seen.set(r.no, r));
+  // Kick off every request in parallel so the partywise summary can render
+  // the moment it returns instead of blocking on the slowest statewise page.
+  const pwPromise = fetchHTML(PARTYWISE_URL);
+  const acPromises = STATEWISE_PAGES.map(u => fetchHTML(u).catch(()=>""));
+
+  let pwOk = false;
+  // 1. Render party-wise summary as soon as it lands.
+  pwPromise.then(html => {
+    try {
+      const pw = parsePartyWise(html);
+      if (pw.rows.length){
+        renderPartyWise(pw);
+        pwOk = true;
+        saveCache({...(loadCache()||{}), pwHtml: html, ts: Date.now()});
+      }
+    } catch (e) { console.error("partywise render failed", e); }
+  }).catch(()=>{});
+
+  // 2. Render AC rows incrementally as each statewise page resolves.
+  const seen = new Map();
+  let resolved = 0;
+  acPromises.forEach(p => p.then(h => {
+    resolved++;
+    if (h){
+      try {
+        parseStatewise(h).forEach(r => seen.set(r.no, r));
+        allACs = [...seen.values()];
+        buildFilterChips();
+        renderTable();
+      } catch (e) { console.error("statewise render failed", e); }
+    }
+  }));
+
+  try{
+    const [pwHtml, ...acHtmls] = await Promise.all([pwPromise, ...acPromises]);
+    // Final consolidated pass (in case incremental renders missed anything).
+    if (!pwOk){
+      const pw = parsePartyWise(pwHtml);
+      if (!pw.rows.length) throw new Error("Could not parse party-wise data");
+      renderPartyWise(pw);
+    }
+    acHtmls.forEach(h => { if (h) parseStatewise(h).forEach(r => seen.set(r.no, r)); });
     allACs = [...seen.values()];
     buildFilterChips();
     renderTable();
 
+    saveCache({pwHtml, acHtmls, ts: Date.now()});
     document.getElementById("liveStatus").textContent = "LIVE";
-    toast(`Updated · ${pw.rows.length} parties · ${allACs.length} ACs`);
+    toast(`Updated · ${allACs.length} ACs`);
   }catch(e){
     console.error(e);
     document.getElementById("liveStatus").textContent = "STALE";
@@ -796,6 +845,31 @@ async function refreshAll(){
   }finally{
     startCountdown();
   }
+}
+
+// Warm-start: paint last-known data immediately so the user sees something
+// before the first network round-trip completes.
+function paintFromCache(){
+  const c = loadCache();
+  if (!c) return false;
+  let painted = false;
+  try {
+    if (c.pwHtml){
+      const pw = parsePartyWise(c.pwHtml);
+      if (pw.rows.length){ renderPartyWise(pw); painted = true; }
+    }
+    if (Array.isArray(c.acHtmls)){
+      const seen = new Map();
+      c.acHtmls.forEach(h => { if (h) parseStatewise(h).forEach(r => seen.set(r.no, r)); });
+      if (seen.size){
+        allACs = [...seen.values()];
+        buildFilterChips();
+        renderTable();
+        painted = true;
+      }
+    }
+  } catch(e){ console.error("cache paint failed", e); }
+  return painted;
 }
 
 document.getElementById("search").addEventListener("input", renderTable);
@@ -874,6 +948,9 @@ document.getElementById("deepBtn").addEventListener("click", runDeepSearch);
 
 buildFilterChips();
 ensureCharts();
+// Paint cached data immediately so the page is interactive before the first
+// network round-trip finishes; refreshAll() then updates everything in place.
+paintFromCache();
 refreshAll();
 </script>
 </body>
