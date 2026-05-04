@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kerala 2026 · Live Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --bg2:#ffffff;
+    --panel:rgba(255,255,255,0.85);
+    --panel-strong:rgba(255,255,255,0.95);
+    --border:rgba(15,23,42,0.08);
+    --text:#0f172a;
+    --muted:#64748b;
+    --accent:#0ea5e9;
+    --gold:#d97706;
+    --inc:#19a3e0;        /* Congress */
+    --cpim:#e63946;       /* CPI(M) */
+    --cpi:#f08a3e;        /* CPI */
+    --iuml:#2a9d8f;       /* IUML */
+    --bjp:#ff8a3d;        /* BJP */
+    --kec:#ffd166;        /* KEC */
+    --kecm:#b388ff;       /* KEC(M) */
+    --rsp:#ef476f;        /* RSP */
+    --ind:#9aa3b2;        /* IND */
+    --udf:#19a3e0;
+    --ldf:#e63946;
+    --nda:#ff8a3d;
+    --oth:#9aa3b2;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(14,165,233,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(255,138,61,.07), transparent 60%),
+      radial-gradient(900px 600px at 50% 120%, rgba(230,57,70,.06), transparent 60%),
+      linear-gradient(180deg,#fafbff 0%, #f3f5fb 100%);
+    min-height:100vh;
+  }
+  .wrap{max-width:1500px;margin:0 auto;padding:28px 28px 64px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand .logo{
+    width:46px;height:46px;border-radius:12px;
+    background:linear-gradient(135deg,#19a3e0,#e63946 60%,#ff8a3d);
+    box-shadow:0 8px 24px rgba(230,57,70,.20), inset 0 0 30px rgba(255,255,255,.25);
+    display:grid;place-items:center;font-weight:800;color:#ffffff;
+  }
+  h1{font-size:22px;margin:0;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 12px;border-radius:999px;
+    background:#ffffff;border:1px solid var(--border);
+    font-size:12px;color:var(--muted);
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 0 rgba(16,185,129,.7);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 14px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+  .countdown{font-family:'JetBrains Mono',monospace;color:var(--text)}
+
+  .grid{display:grid;gap:16px}
+  .kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  .card{
+    position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.85));
+    border:1px solid var(--border);
+    border-radius:16px;padding:18px;
+    backdrop-filter: blur(14px);
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 12px 30px -16px rgba(15,23,42,.18), 0 2px 6px rgba(15,23,42,.04);
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;
+    background:linear-gradient(135deg,rgba(255,255,255,.6),transparent 30%);
+    mix-blend-mode:overlay;
+  }
+  .kpi .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.4px}
+  .kpi .value{font-size:34px;font-weight:800;margin-top:6px;line-height:1}
+  .kpi .delta{font-size:11px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace}
+  .kpi .stripe{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);opacity:.9}
+
+  .row{display:grid;gap:16px;margin-top:16px}
+  .row.main{grid-template-columns: 1.25fr 1fr}
+  @media(max-width:1100px){.row.main{grid-template-columns:1fr}}
+  .row.bottom{grid-template-columns: 1.6fr 1fr}
+  @media(max-width:1100px){.row.bottom{grid-template-columns:1fr}}
+
+  .card h3{margin:0 0 14px;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .card h3 .hint{float:right;color:#5b6580;font-weight:400;letter-spacing:0;text-transform:none;font-size:11px}
+
+  /* Alliance bar */
+  .alliance-bar{height:36px;border-radius:10px;overflow:hidden;display:flex;border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+  .alliance-bar > div{height:100%;display:flex;align-items:center;justify-content:center;color:#ffffff;font-weight:700;font-size:12px;transition:flex-grow .8s ease;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+  .alliance-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+  .alliance-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+  .halfway{
+    position:relative;height:8px;background:rgba(15,23,42,.06);border-radius:99px;margin-top:10px;overflow:hidden;
+  }
+  .halfway .seg{position:absolute;top:0;bottom:0}
+  .halfway .marker{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--gold);box-shadow:0 0 6px rgba(217,119,6,.5)}
+  .halfway .marker::after{content:"71 = Majority";position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--gold);white-space:nowrap;font-family:'JetBrains Mono',monospace;font-weight:600}
+
+  /* Party rows */
+  .party-list{display:flex;flex-direction:column;gap:10px}
+  .party-row{display:grid;grid-template-columns:160px 1fr 56px;align-items:center;gap:12px}
+  .party-row .name{font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px}
+  .party-row .name i{width:10px;height:10px;border-radius:3px}
+  .party-row .track{height:14px;background:rgba(15,23,42,.05);border-radius:7px;overflow:hidden;position:relative}
+  .party-row .fill{height:100%;border-radius:7px;transition:width 1s cubic-bezier(.22,.7,.2,1)}
+  .party-row .count{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;font-size:14px}
+
+  /* Donut wrapper */
+  .donut-wrap{position:relative;height:280px}
+  .donut-center{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center}
+  .donut-center .big{font-size:34px;font-weight:800}
+  .donut-center .small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.6px}
+
+  /* Table */
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .search{
+    flex:1;min-width:220px;
+    background:#ffffff;border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;
+  }
+  .search:focus{border-color:rgba(14,165,233,.5);box-shadow:0 0 0 4px rgba(14,165,233,.10)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:8px 12px;border-radius:999px;background:#ffffff;border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;user-select:none;transition:.15s}
+  .chip:hover{color:var(--text)}
+  .chip.active{color:#ffffff;background:var(--accent);border-color:transparent;font-weight:700}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:linear-gradient(180deg,#ffffff,rgba(255,255,255,.92));backdrop-filter:blur(10px);text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  tbody td{padding:11px 12px;border-bottom:1px dashed rgba(15,23,42,.07)}
+  tbody tr:hover{background:rgba(14,165,233,.04)}
+  .ac-name{font-weight:600}
+  .lead-party{display:inline-flex;align-items:center;gap:8px}
+  .lead-party i{width:8px;height:8px;border-radius:50%}
+  .margin{font-family:'JetBrains Mono',monospace;color:#b45309;font-weight:600}
+  .table-scroll{max-height:520px;overflow:auto;border-radius:12px;border:1px solid var(--border);background:#ffffff}
+  .status-tag{font-size:10px;padding:3px 8px;border-radius:99px;background:rgba(255,138,61,.12);color:#c2410c;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+
+  .footer{margin-top:22px;color:var(--muted);font-size:11px;text-align:center}
+  .footer a{color:var(--accent);text-decoration:none}
+
+  /* Hero */
+  .hero{padding:22px 22px 26px}
+  .hero-head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px}
+  .hero-stats{display:flex;gap:18px;flex-wrap:wrap}
+  .hero-stat{text-align:right}
+  .hero-stat .v{font-size:30px;font-weight:800;line-height:1;font-family:'Inter',sans-serif}
+  .hero-stat .l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+  .hero-grid{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:center}
+  @media(max-width:900px){.hero-grid{grid-template-columns:1fr}}
+  .alliance-bar.big{height:54px;border-radius:14px;font-size:14px}
+  .alliance-bar.big > div{font-size:13px;letter-spacing:.5px}
+  .hero .donut-wrap{height:240px}
+
+  /* Button */
+  .btn{
+    background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+    color:#ffffff;border:0;padding:10px 14px;border-radius:10px;
+    font-weight:700;font-size:12px;letter-spacing:.4px;cursor:pointer;
+    transition:.2s;white-space:nowrap;box-shadow:0 6px 16px -8px rgba(14,165,233,.6);
+  }
+  .btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn[disabled]{opacity:.5;cursor:default;transform:none;filter:saturate(.5)}
+
+  /* Deep progress */
+  .deep-progress{margin:8px 0 14px}
+  .deep-bar{height:6px;background:rgba(15,23,42,.06);border-radius:99px;overflow:hidden}
+  .deep-bar > div{height:100%;width:0;background:linear-gradient(90deg,#0ea5e9,#38bdf8);transition:width .3s}
+  .deep-label{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace}
+
+  /* Expandable detail row */
+  tbody tr.ac-row{cursor:pointer}
+  tbody tr.ac-row:hover{background:rgba(14,165,233,.06)}
+  tbody tr.ac-row.open{background:rgba(14,165,233,.08)}
+  tbody tr.ac-row.match{background:rgba(217,119,6,.08)}
+  tbody tr.detail td{padding:0;background:rgba(241,245,249,.7);border-bottom:1px solid var(--border)}
+  .detail-inner{padding:18px 22px}
+  .detail-inner h4{margin:0 0 12px;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .cand-list{display:flex;flex-direction:column;gap:8px}
+  .cand{display:grid;grid-template-columns:24px 1fr 200px 110px 90px;gap:12px;align-items:center;font-size:13px}
+  .cand .rk{color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:right}
+  .cand .nm{font-weight:600;display:flex;align-items:center;gap:8px}
+  .cand .nm i{width:8px;height:8px;border-radius:50%;flex:none}
+  .cand .pt{color:var(--muted);font-size:12px}
+  .cand .vt{font-family:'JetBrains Mono',monospace;text-align:right}
+  .cand .pc{font-family:'JetBrains Mono',monospace;text-align:right;color:#b45309;font-weight:600}
+  .cand-track{grid-column:1/-1;height:5px;background:rgba(15,23,42,.06);border-radius:99px;overflow:hidden;margin-top:-2px;margin-bottom:6px}
+  .cand-track > div{height:100%;border-radius:99px}
+  .cand.highlight{background:rgba(217,119,6,.10);border-radius:8px;padding:6px 8px;margin:0 -8px}
+  @media(max-width:700px){.cand{grid-template-columns:24px 1fr 100px}.cand .pt,.cand .pc{display:none}}
+
+  .skeleton{background:linear-gradient(90deg,rgba(15,23,42,.04),rgba(15,23,42,.08),rgba(15,23,42,.04));background-size:200% 100%;animation:shine 1.4s infinite;border-radius:6px;height:14px}
+  @keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  .toast{
+    position:fixed;bottom:20px;right:20px;z-index:50;
+    background:#ffffff;border:1px solid var(--border);
+    padding:10px 14px;border-radius:10px;font-size:12px;color:var(--text);
+    box-shadow:0 10px 30px -10px rgba(15,23,42,.25);
+    transform:translateY(20px);opacity:0;transition:.3s;
+  }
+  .toast.show{transform:translateY(0);opacity:1}
+  .err{color:#b91c1c}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <h1>Kerala · Assembly Election 2026 <span style="font-weight:400;color:var(--muted);font-size:13px">· Live</span></h1>
+        <div class="sub">General Election to Assembly Constituencies (140 ACs) · Source: Election Commission of India</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="pill"><span class="live-dot"></span><span id="liveStatus">LIVE</span></div>
+      <div class="pill">Last update: <span id="lastUpdated" style="color:var(--text);margin-left:6px">—</span></div>
+      <div class="pill">Next refresh in <span class="countdown" id="countdown">30s</span></div>
+    </div>
+  </header>
+
+  <!-- HERO: Alliance Tally (main) -->
+  <div class="card hero">
+    <div class="hero-head">
+      <div>
+        <h3 style="margin:0">Alliance Tally <span class="hint">Live · Majority Mark = 71</span></h3>
+        <div class="sub" style="margin-top:4px">UDF · LDF · NDA · Others — combined seats won and leading</div>
+      </div>
+      <div class="hero-stats" id="heroStats"></div>
+    </div>
+    <div class="hero-grid">
+      <div class="hero-bar-wrap">
+        <div class="alliance-bar big" id="allianceBar">
+          <div style="background:var(--udf);flex-grow:1">UDF</div>
+          <div style="background:var(--ldf);flex-grow:1">LDF</div>
+          <div style="background:var(--nda);flex-grow:1">NDA</div>
+        </div>
+        <div class="halfway"><div class="seg" id="halfSeg" style="left:0;width:0"></div><div class="marker" style="left:50.71%"></div></div>
+        <div class="alliance-legend" id="allianceLegend"></div>
+      </div>
+      <div class="donut-wrap">
+        <canvas id="donut"></canvas>
+        <div class="donut-center"><div><div class="big" id="donutBig">—</div><div class="small">Total Seats</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="grid kpis" style="margin-top:16px">
+    <div class="card kpi"><div class="stripe" style="background:#6ee7ff"></div><div class="label">Total Seats</div><div class="value" id="kpiTotal">140</div><div class="delta">Assembly Constituencies</div></div>
+    <div class="card kpi"><div class="stripe" style="background:var(--inc)"></div><div class="label">INC (UDF Lead)</div><div class="value" id="kpiINC">—</div><div class="delta" id="kpiINCDelta">won + leading</div></div>
+    <div class="card kpi"><div class="stripe" style="background:var(--cpim)"></div><div class="label">CPI(M) (LDF Lead)</div><div class="value" id="kpiCPIM">—</div><div class="delta" id="kpiCPIMDelta">won + leading</div></div>
+    <div class="card kpi"><div class="stripe" style="background:var(--bjp)"></div><div class="label">BJP (NDA)</div><div class="value" id="kpiBJP">—</div><div class="delta" id="kpiBJPDelta">won + leading</div></div>
+    <div class="card kpi"><div class="stripe" style="background:var(--gold)"></div><div class="label">Counted / Declared</div><div class="value" id="kpiDeclared">—</div><div class="delta" id="kpiDeclaredDelta">of 140</div></div>
+    <div class="card kpi"><div class="stripe" style="background:#34d399"></div><div class="label">Front Leading</div><div class="value" id="kpiFront" style="font-size:26px">—</div><div class="delta" id="kpiFrontDelta">majority = 71</div></div>
+  </div>
+
+  <!-- Party-wise -->
+  <div class="row main">
+    <div class="card">
+      <h3>Party-wise Seats <span class="hint">Won + Leading (out of 140)</span></h3>
+      <div class="party-list" id="partyList">
+        <div class="skeleton" style="height:30px"></div>
+        <div class="skeleton" style="height:30px;margin-top:8px"></div>
+        <div class="skeleton" style="height:30px;margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Vote-Bar Trend</h3>
+      <canvas id="barChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Constituency table -->
+  <div class="card" style="margin-top:16px">
+    <h3>Constituency-wise In-Depth <span class="hint">Click any row for full candidate breakdown</span></h3>
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="Search constituency, leading/trailing candidate, party…" />
+      <button class="btn" id="deepBtn" title="Fetch every constituency's candidate list so you can search ALL contestants (not just leading/trailing)">Enable deep candidate search</button>
+      <div class="chips" id="filterChips"></div>
+    </div>
+    <div class="deep-progress" id="deepProgress" style="display:none">
+      <div class="deep-bar"><div id="deepBarFill"></div></div>
+      <div class="deep-label" id="deepLabel">Loading candidate details…</div>
+    </div>
+    <div class="table-scroll">
+      <table id="acTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Constituency</th>
+            <th>Leading Candidate</th>
+            <th>Party</th>
+            <th>Trailing Candidate</th>
+            <th>Party</th>
+            <th style="text-align:right">Margin</th>
+            <th>Round</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="acBody">
+          <tr><td colspan="9" style="padding:30px;color:var(--muted);text-align:center">Loading constituency data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    Auto-refreshes every 30 seconds · Data is fetched live from
+    <a href="https://results.eci.gov.in/ResultAcGenMay2026/partywiseresult-S11.htm" target="_blank">results.eci.gov.in</a>
+    via a public CORS relay. Final figures will be in Form-20.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Config ---------- */
+const REFRESH_MS = 30000;
+const PARTYWISE_URL = "https://results.eci.gov.in/ResultAcGenMay2026/partywiseresult-S11.htm";
+const STATEWISE_PAGES = Array.from({length:7}, (_,i)=>`https://results.eci.gov.in/ResultAcGenMay2026/statewiseS11${i+1}.htm`);
+/* r.jina.ai is a public reader that returns markdown of any URL with permissive CORS.
+   We use it as the single relay because allorigins / corsproxy require paid plans. */
+const PROXIES = [
+  u => `https://r.jina.ai/${u}`,
+  u => `https://r.jina.ai/http://${u.replace(/^https?:\/\//,"")}`
+];
+
+/* ---------- Party metadata ---------- */
+const PARTY_COLORS = {
+  "Indian National Congress":"#19a3e0",
+  "Communist Party of India (Marxist)":"#e63946",
+  "Indian Union Muslim League":"#2a9d8f",
+  "Communist Party of India":"#f08a3e",
+  "Kerala Congress":"#ffd166",
+  "Bharatiya Janata Party":"#ff8a3d",
+  "Kerala Congress (M)":"#b388ff",
+  "Revolutionary Socialist Party":"#ef476f",
+  "Rashtriya Janata Dal":"#7cc4ff",
+  "Revolutionary Marxist Party of India":"#c1666b",
+  "Kerala Congress (Jacob)":"#ffb86b",
+  "Communist Marxist Party Kerala State Committee":"#9b5de5",
+  "Independent":"#9aa3b2"
+};
+const ALLIANCE = {
+  UDF: ["Indian National Congress","Indian Union Muslim League","Kerala Congress","Kerala Congress (Jacob)","Revolutionary Socialist Party"],
+  LDF: ["Communist Party of India (Marxist)","Communist Party of India","Kerala Congress (M)","Rashtriya Janata Dal","Revolutionary Marxist Party of India","Communist Marxist Party Kerala State Committee"],
+  NDA: ["Bharatiya Janata Party"]
+};
+const ALLIANCE_COLOR = {UDF:"#19a3e0", LDF:"#e63946", NDA:"#ff8a3d", Others:"#9aa3b2"};
+
+function allianceOf(party){
+  for (const a of Object.keys(ALLIANCE)) if (ALLIANCE[a].includes(party)) return a;
+  return "Others";
+}
+
+/* ---------- Fetch with proxy fallback ---------- */
+async function fetchHTML(url){
+  let lastErr;
+  for (const wrap of PROXIES){
+    try{
+      // cache-buster so we always get fresh data
+      const target = wrap(url) + (wrap(url).includes("?") ? "&" : "?") + "_=" + Date.now();
+      const r = await fetch(target, {cache:"no-store", headers:{"Accept":"text/plain, text/html"}});
+      if (!r.ok) throw new Error("HTTP "+r.status);
+      const t = await r.text();
+      if (t && t.length > 500) return t;
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error("All proxies failed");
+}
+
+/* Split a markdown pipe-table row into trimmed cells. */
+function splitPipeRow(line){
+  // strip leading/trailing pipes, then split
+  const s = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return s.split("|").map(c => c.trim());
+}
+
+/* Remove the noisy trailing fragment that r.jina.ai appends after party names,
+   e.g. "Indian National Congress i ### Party Wise State Trends Leading In:56 ..." */
+function cleanParty(s){
+  if (!s) return "";
+  return s
+    .replace(/\s*###[\s\S]*$/, "")
+    .replace(/\s+i\s*$/i, "")
+    .replace(/\s*i$/, "")
+    .replace(/\[(.*?)\]\([^)]*\)/g, "$1")
+    .trim();
+}
+
+/* ---------- Parsers (markdown from r.jina.ai) ---------- */
+function parsePartyWise(md){
+  const rows = [];
+  md.split("\n").forEach(line => {
+    if (!line.includes("|")) return;
+    const cells = splitPipeRow(line);
+    if (cells.length < 4) return;
+    const partyRaw = cleanParty(cells[0]);
+    // numeric columns may be wrapped as [N](url) markdown links
+    const num = s => {
+      const m = String(s).match(/-?\d+/);
+      return m ? parseInt(m[0],10) : NaN;
+    };
+    const won = num(cells[1]);
+    const lead = num(cells[2]);
+    const total = num(cells[3]);
+    if (!partyRaw || isNaN(won) || isNaN(lead) || isNaN(total)) return;
+    if (/^party$/i.test(partyRaw)) return;   // header row
+    if (/^total$/i.test(partyRaw)) return;   // grand-total summary row (was being
+                                             // double-counted, inflating Total Seats to 280)
+    const party = partyRaw.replace(/\s*-\s*[A-Z()]+\s*$/, "").trim();
+    if (!party) return;
+    rows.push({party, won, lead, total});
+  });
+  const lu = (md.match(/Last Updated at[^\n]+/) || [""])[0].trim();
+  return {rows, lastUpdated: lu};
+}
+
+function parseStatewise(md){
+  const out = [];
+  md.split("\n").forEach(line => {
+    if (!line.includes("|")) return;
+    const cells = splitPipeRow(line);
+    if (cells.length < 9) return;
+    const [ac, no, leadCand, leadPartyRaw, trailCand, trailPartyRaw, margin, round, status] = cells;
+    if (!/^\d+$/.test(no)) return;
+    out.push({
+      ac: ac.trim(),
+      no: parseInt(no,10),
+      leadCand: leadCand.trim(),
+      leadParty: cleanParty(leadPartyRaw),
+      trailCand: trailCand.trim(),
+      trailParty: cleanParty(trailPartyRaw),
+      margin: parseInt(String(margin).replace(/[^\d-]/g,""),10) || 0,
+      round: round.trim(),
+      status: status.trim()
+    });
+  });
+  return out;
+}
+
+/* ---------- Charts ---------- */
+let donutChart, barChart;
+function ensureCharts(){
+  if (!donutChart){
+    donutChart = new Chart(document.getElementById("donut"), {
+      type:"doughnut",
+      data:{labels:["UDF","LDF","NDA","Others"], datasets:[{data:[0,0,0,0],
+        backgroundColor:[ALLIANCE_COLOR.UDF,ALLIANCE_COLOR.LDF,ALLIANCE_COLOR.NDA,ALLIANCE_COLOR.Others],
+        borderColor:"#ffffff", borderWidth:3, hoverOffset:8}]},
+      options:{cutout:"72%", plugins:{legend:{position:"bottom",labels:{color:"#475569",boxWidth:10,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed} seats`}}}, animation:{duration:800}}
+    });
+  }
+  if (!barChart){
+    barChart = new Chart(document.getElementById("barChart"), {
+      type:"bar",
+      data:{labels:[],datasets:[{label:"Seats", data:[], backgroundColor:[], borderRadius:6, borderSkipped:false}]},
+      options:{
+        indexAxis:"y",
+        plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.parsed.x} seats`}}},
+        scales:{
+          x:{grid:{color:"rgba(15,23,42,.06)"}, ticks:{color:"#64748b"}},
+          y:{grid:{display:false}, ticks:{color:"#0f172a",font:{size:11}}}
+        },
+        animation:{duration:800}
+      }
+    });
+  }
+}
+
+/* ---------- Render ---------- */
+function renderPartyWise({rows, lastUpdated}){
+  rows.sort((a,b)=>b.total-a.total);
+  const max = Math.max(...rows.map(r=>r.total), 1);
+  const total = rows.reduce((s,r)=>s+r.total,0);
+
+  // KPIs
+  const get = name => rows.find(r=>r.party===name) || {won:0,lead:0,total:0};
+  const inc = get("Indian National Congress");
+  const cpim = get("Communist Party of India (Marxist)");
+  const bjp = get("Bharatiya Janata Party");
+  const declared = rows.reduce((s,r)=>s+r.won,0);
+  document.getElementById("kpiINC").textContent = inc.total;
+  document.getElementById("kpiINCDelta").textContent = `won ${inc.won} · leading ${inc.lead}`;
+  document.getElementById("kpiCPIM").textContent = cpim.total;
+  document.getElementById("kpiCPIMDelta").textContent = `won ${cpim.won} · leading ${cpim.lead}`;
+  document.getElementById("kpiBJP").textContent = bjp.total;
+  document.getElementById("kpiBJPDelta").textContent = `won ${bjp.won} · leading ${bjp.lead}`;
+  document.getElementById("kpiDeclared").textContent = declared;
+  document.getElementById("kpiDeclaredDelta").textContent = `${total} of 140 reporting · ${declared} declared`;
+
+  // Alliance tally — include Others (Independents / unaligned parties) so the
+  // four buckets always sum to the reporting total (140 once everyone is in).
+  const tally = {UDF:0, LDF:0, NDA:0, Others:0};
+  rows.forEach(r => {
+    const a = allianceOf(r.party);
+    tally[a] = (tally[a] || 0) + r.total;
+  });
+  const ALLIANCES = ["UDF","LDF","NDA","Others"];
+  const bar = document.getElementById("allianceBar");
+  bar.innerHTML = "";
+  ALLIANCES.forEach(k=>{
+    if (!tally[k]) return;
+    const d = document.createElement("div");
+    d.style.background = ALLIANCE_COLOR[k];
+    d.style.flexGrow = tally[k];
+    d.textContent = `${k} ${tally[k]}`;
+    bar.appendChild(d);
+  });
+
+  // Halfway segment shows leader's progress to 71 (ignore "Others")
+  const leadAlliance = Object.entries(tally)
+    .filter(([k]) => k !== "Others")
+    .sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById("kpiFront").textContent = leadAlliance[0];
+  document.getElementById("kpiFrontDelta").textContent = `${leadAlliance[1]} seats · majority = 71`;
+  const halfSeg = document.getElementById("halfSeg");
+  halfSeg.style.background = ALLIANCE_COLOR[leadAlliance[0]];
+  halfSeg.style.width = Math.min(100, (leadAlliance[1]/140)*100) + "%";
+
+  // Hero stats — include Others so values add up to 140
+  const heroStats = document.getElementById("heroStats");
+  heroStats.innerHTML = ALLIANCES.map(k => `
+    <div class="hero-stat">
+      <div class="v" style="color:${ALLIANCE_COLOR[k]}">${tally[k]}</div>
+      <div class="l">${k}${k!=="Others"&&tally[k]>=71?' · MAJORITY':''}</div>
+    </div>`).join("");
+
+  // Legend
+  const leg = document.getElementById("allianceLegend");
+  leg.innerHTML = ALLIANCES.map(k =>
+    `<span><i style="background:${ALLIANCE_COLOR[k]}"></i>${k} · <b style="color:var(--text)">${tally[k]}</b></span>`).join("");
+
+  // Donut — show all four buckets so the centre total matches 140
+  ensureCharts();
+  donutChart.data.labels = ALLIANCES;
+  donutChart.data.datasets[0].data = ALLIANCES.map(k=>tally[k]);
+  donutChart.data.datasets[0].backgroundColor = ALLIANCES.map(k=>ALLIANCE_COLOR[k]);
+  donutChart.update();
+  document.getElementById("donutBig").textContent = total;
+
+  // Party rows
+  const list = document.getElementById("partyList");
+  list.innerHTML = "";
+  rows.forEach(r=>{
+    const color = PARTY_COLORS[r.party] || "#9aa3b2";
+    const pct = (r.total/max)*100;
+    const row = document.createElement("div");
+    row.className = "party-row";
+    row.innerHTML = `
+      <div class="name"><i style="background:${color}"></i><span>${shortParty(r.party)}</span></div>
+      <div class="track"><div class="fill" style="width:${pct}%;background:linear-gradient(90deg,${color},${color}cc)"></div></div>
+      <div class="count">${r.total}</div>`;
+    list.appendChild(row);
+  });
+
+  // Bar chart (top 8)
+  const top = rows.slice(0,8);
+  barChart.data.labels = top.map(r=>shortParty(r.party));
+  barChart.data.datasets[0].data = top.map(r=>r.total);
+  barChart.data.datasets[0].backgroundColor = top.map(r=>PARTY_COLORS[r.party] || "#9aa3b2");
+  barChart.update();
+
+  if (lastUpdated) document.getElementById("lastUpdated").textContent = lastUpdated.replace("Last Updated at","").trim();
+}
+
+function shortParty(p){
+  const map = {
+    "Indian National Congress":"INC",
+    "Communist Party of India (Marxist)":"CPI(M)",
+    "Communist Party of India":"CPI",
+    "Indian Union Muslim League":"IUML",
+    "Bharatiya Janata Party":"BJP",
+    "Kerala Congress":"KEC",
+    "Kerala Congress (M)":"KEC(M)",
+    "Kerala Congress (Jacob)":"KEC(J)",
+    "Revolutionary Socialist Party":"RSP",
+    "Rashtriya Janata Dal":"RJD",
+    "Revolutionary Marxist Party of India":"RMPOI",
+    "Communist Marxist Party Kerala State Committee":"CMP",
+    "Independent":"IND"
+  };
+  return map[p] || p;
+}
+
+/* ---------- Constituency table ---------- */
+let allACs = [];
+let activeFilter = "ALL";
+const candidatesByAC = new Map(); // no -> [{name, party, evm, postal, total, pct}]
+const openACs = new Set();        // const numbers currently expanded
+let deepLoaded = false;
+let deepInProgress = false;
+
+function acDetailURL(no){
+  return `https://results.eci.gov.in/ResultAcGenMay2026/ConstituencywiseS11${no}.htm`;
+}
+
+function parseCandidates(md){
+  const out = [];
+  md.split("\n").forEach(line => {
+    if (!line.includes("|")) return;
+    const cells = splitPipeRow(line);
+    if (cells.length < 7) return;
+    const sn = cells[0];
+    if (!/^\d+$/.test(sn)) return;
+    // Candidate name occasionally comes through as a markdown link [Name](url)
+    const name = cleanParty(cells[1]);
+    const party = cleanParty(cells[2]);
+    const evm = parseInt(String(cells[3]).replace(/[^\d]/g,""),10) || 0;
+    const postal = parseInt(String(cells[4]).replace(/[^\d]/g,""),10) || 0;
+    const total = parseInt(String(cells[5]).replace(/[^\d]/g,""),10) || 0;
+    const pct = parseFloat(String(cells[6]).replace(/[^\d.]/g,"")) || 0;
+    if (!name) return;
+    out.push({sn:parseInt(sn,10), name, party, evm, postal, total, pct});
+  });
+  return out;
+}
+
+async function loadACDetails(no){
+  if (candidatesByAC.has(no)) return candidatesByAC.get(no);
+  const md = await fetchHTML(acDetailURL(no));
+  const cands = parseCandidates(md);
+  candidatesByAC.set(no, cands);
+  return cands;
+}
+
+function renderDetailRow(r, cands, query){
+  const max = Math.max(...cands.map(c=>c.total), 1);
+  const list = cands.slice().sort((a,b)=>b.total-a.total).map((c,i) => {
+    const color = PARTY_COLORS[c.party] || "#9aa3b2";
+    const matchHL = query && (c.name.toLowerCase().includes(query) || c.party.toLowerCase().includes(query));
+    const w = (c.total/max)*100;
+    return `
+      <div class="cand ${matchHL?'highlight':''}">
+        <div class="rk">${i+1}</div>
+        <div class="nm"><i style="background:${color}"></i>${escapeHTML(c.name)}</div>
+        <div class="pt">${escapeHTML(c.party)}</div>
+        <div class="vt">${c.total.toLocaleString("en-IN")}</div>
+        <div class="pc">${c.pct.toFixed(2)}%</div>
+        <div class="cand-track"><div style="width:${w}%;background:linear-gradient(90deg,${color},${color}aa)"></div></div>
+      </div>`;
+  }).join("");
+  return `<tr class="detail"><td colspan="9"><div class="detail-inner">
+    <h4>AC ${r.no} · ${escapeHTML(r.ac)} — Candidate Breakdown <span style="color:var(--muted);float:right;font-weight:400;text-transform:none;letter-spacing:0">${r.round} · ${escapeHTML(r.status)}</span></h4>
+    <div class="cand-list">${list || '<div style="color:var(--muted);font-size:12px">No candidate data available yet.</div>'}</div>
+  </div></td></tr>`;
+}
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function renderTable(){
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const tbody = document.getElementById("acBody");
+  let rows = allACs.slice();
+  if (activeFilter !== "ALL") rows = rows.filter(r => allianceOf(r.leadParty) === activeFilter);
+
+  // Compute per-row match (incl. deep candidate match)
+  const matchAC = r => {
+    if (!q) return {match:true, deep:false};
+    const shallow =
+      r.ac.toLowerCase().includes(q) ||
+      r.leadCand.toLowerCase().includes(q) ||
+      r.trailCand.toLowerCase().includes(q) ||
+      r.leadParty.toLowerCase().includes(q) ||
+      r.trailParty.toLowerCase().includes(q);
+    if (shallow) return {match:true, deep:false};
+    const cands = candidatesByAC.get(r.no);
+    if (cands && cands.some(c => c.name.toLowerCase().includes(q) || c.party.toLowerCase().includes(q))) {
+      return {match:true, deep:true};
+    }
+    return {match:false, deep:false};
+  };
+
+  rows = rows.map(r => ({...r, _m: matchAC(r)})).filter(r => r._m.match);
+  rows.sort((a,b)=>a.no-b.no);
+  if (rows.length === 0){
+    tbody.innerHTML = `<tr><td colspan="9" style="padding:30px;text-align:center;color:var(--muted)">No matching constituencies.${q && !deepLoaded ? ' <br><span style="font-size:11px">Try "Enable deep candidate search" to include all contestants.</span>' : ''}</td></tr>`;
+    return;
+  }
+  // Auto-expand deep matches
+  rows.forEach(r => { if (r._m.deep) openACs.add(r.no); });
+
+  tbody.innerHTML = rows.map(r => {
+    const c1 = PARTY_COLORS[r.leadParty] || "#9aa3b2";
+    const c2 = PARTY_COLORS[r.trailParty] || "#9aa3b2";
+    const declared = /declared/i.test(r.status);
+    const isOpen = openACs.has(r.no);
+    const main = `<tr class="ac-row ${isOpen?'open':''} ${r._m.deep?'match':''}" data-no="${r.no}">
+      <td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${r.no}</td>
+      <td class="ac-name">${escapeHTML(r.ac)} <span style="color:var(--muted);font-size:11px">${isOpen?'▾':'▸'}</span></td>
+      <td>${escapeHTML(r.leadCand)}</td>
+      <td><span class="lead-party"><i style="background:${c1}"></i>${shortParty(r.leadParty)}</span></td>
+      <td style="color:var(--muted)">${escapeHTML(r.trailCand)}</td>
+      <td><span class="lead-party"><i style="background:${c2}"></i>${shortParty(r.trailParty)}</span></td>
+      <td class="margin" style="text-align:right">${r.margin.toLocaleString("en-IN")}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${escapeHTML(r.round)}</td>
+      <td><span class="status-tag" style="${declared?'background:rgba(16,185,129,.15);color:#047857':''}">${escapeHTML(r.status)}</span></td>
+    </tr>`;
+    let detail = "";
+    if (isOpen){
+      const cands = candidatesByAC.get(r.no);
+      if (cands) detail = renderDetailRow(r, cands, q);
+      else detail = `<tr class="detail"><td colspan="9"><div class="detail-inner" style="color:var(--muted);font-size:12px">Loading candidate breakdown for ${escapeHTML(r.ac)}…</div></td></tr>`;
+    }
+    return main + detail;
+  }).join("");
+
+  // Click handlers
+  tbody.querySelectorAll("tr.ac-row").forEach(tr => {
+    tr.addEventListener("click", async () => {
+      const no = parseInt(tr.dataset.no,10);
+      if (openACs.has(no)) openACs.delete(no);
+      else {
+        openACs.add(no);
+        if (!candidatesByAC.has(no)){
+          renderTable(); // show loading row
+          try { await loadACDetails(no); } catch(e){ toast("Could not load "+no, true); }
+        }
+      }
+      renderTable();
+    });
+  });
+}
+
+function buildFilterChips(){
+  const chips = document.getElementById("filterChips");
+  chips.innerHTML = ["ALL","UDF","LDF","NDA"].map(k =>
+    `<div class="chip ${k===activeFilter?'active':''}" data-k="${k}">${k}</div>`).join("");
+  chips.querySelectorAll(".chip").forEach(el => el.addEventListener("click", ()=>{
+    activeFilter = el.dataset.k; buildFilterChips(); renderTable();
+  }));
+}
+
+/* ---------- Refresh ---------- */
+let countdown = REFRESH_MS/1000, timer;
+function startCountdown(){
+  clearInterval(timer);
+  countdown = REFRESH_MS/1000;
+  document.getElementById("countdown").textContent = countdown+"s";
+  timer = setInterval(()=>{
+    countdown--;
+    document.getElementById("countdown").textContent = countdown+"s";
+    if (countdown<=0) { clearInterval(timer); refreshAll(); }
+  },1000);
+}
+
+function toast(msg, isErr){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.toggle("err", !!isErr); t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2400);
+}
+
+async function refreshAll(){
+  document.getElementById("liveStatus").textContent = "REFRESHING";
+  try{
+    const [pwHtml, ...acHtmls] = await Promise.all([
+      fetchHTML(PARTYWISE_URL),
+      ...STATEWISE_PAGES.map(u => fetchHTML(u).catch(()=>""))
+    ]);
+    const pw = parsePartyWise(pwHtml);
+    if (!pw.rows.length) throw new Error("Could not parse party-wise data");
+    renderPartyWise(pw);
+
+    allACs = acHtmls.flatMap(h => h ? parseStatewise(h) : []);
+    // de-duplicate by AC number
+    const seen = new Map();
+    allACs.forEach(r => seen.set(r.no, r));
+    allACs = [...seen.values()];
+    buildFilterChips();
+    renderTable();
+
+    document.getElementById("liveStatus").textContent = "LIVE";
+    toast(`Updated · ${pw.rows.length} parties · ${allACs.length} ACs`);
+  }catch(e){
+    console.error(e);
+    document.getElementById("liveStatus").textContent = "STALE";
+    toast("Refresh failed: "+e.message, true);
+  }finally{
+    startCountdown();
+  }
+}
+
+document.getElementById("search").addEventListener("input", renderTable);
+
+/* ---------- Deep candidate search: load all 140 detail pages with a progress bar ---------- */
+async function loadACDetailsWithRetry(no, attempts = 3){
+  let lastErr;
+  for (let k=0; k<attempts; k++){
+    try { return await loadACDetails(no); }
+    catch(e){
+      lastErr = e;
+      // Back off progressively to avoid r.jina.ai rate limiting
+      await new Promise(res => setTimeout(res, 400 + k*600));
+    }
+  }
+  throw lastErr;
+}
+
+async function runDeepSearch(){
+  if (deepInProgress || deepLoaded) return;
+  deepInProgress = true;
+  const btn = document.getElementById("deepBtn");
+  const wrap = document.getElementById("deepProgress");
+  const fill = document.getElementById("deepBarFill");
+  const label = document.getElementById("deepLabel");
+  btn.disabled = true; btn.textContent = "Loading candidates…";
+  wrap.style.display = "block";
+
+  const list = allACs.slice().sort((a,b)=>a.no-b.no);
+  const total = list.length;
+  let done = 0;
+  const updateBar = () => {
+    const pct = total ? Math.round((done/total)*100) : 0;
+    fill.style.width = pct + "%";
+    label.textContent = `Loaded ${done}/${total} constituencies · ${pct}%`;
+  };
+
+  // Lower concurrency to avoid the r.jina.ai relay rate-limiting and
+  // dropping requests silently (which left candidatesByAC incomplete).
+  const BATCH = 3;
+  for (let i=0; i<list.length; i+=BATCH){
+    const batch = list.slice(i, i+BATCH).filter(r => !candidatesByAC.has(r.no));
+    await Promise.all(batch.map(async r => {
+      try { await loadACDetailsWithRetry(r.no, 3); }
+      catch(e){ /* will be picked up by the final retry pass */ }
+      finally { done++; updateBar(); }
+    }));
+    // Account for any ACs in this batch that were already cached (skipped above).
+    done = Math.max(done, Math.min(total, i + BATCH));
+    updateBar();
+    renderTable();
+  }
+
+  // Final retry pass for any AC still missing after the main loop.
+  let missing = list.filter(r => !candidatesByAC.has(r.no));
+  if (missing.length){
+    label.textContent = `Retrying ${missing.length} constituencies…`;
+    for (const r of missing){
+      try { await loadACDetailsWithRetry(r.no, 4); } catch(e){}
+    }
+  }
+  missing = list.filter(r => !candidatesByAC.has(r.no));
+  const loaded = total - missing.length;
+
+  deepLoaded = true; deepInProgress = false;
+  btn.textContent = missing.length ? `Deep search (${loaded}/${total})` : "Deep search ready";
+  label.textContent = missing.length
+    ? `${loaded}/${total} loaded · ${missing.length} could not be fetched`
+    : `All ${total} constituencies loaded · search any candidate`;
+  renderTable();
+  setTimeout(()=>{ wrap.style.display = "none"; }, 2200);
+  toast(missing.length ? `Deep search ready (${loaded}/${total})` : "Deep candidate search enabled",
+        missing.length > 0);
+}
+document.getElementById("deepBtn").addEventListener("click", runDeepSearch);
+
+buildFilterChips();
+ensureCharts();
+refreshAll();
+</script>
+</body>
+</html>
