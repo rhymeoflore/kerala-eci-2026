@@ -336,10 +336,14 @@ const REFRESH_MS = 30000;
 const PARTYWISE_URL = "https://results.eci.gov.in/ResultAcGenMay2026/partywiseresult-S11.htm";
 const STATEWISE_PAGES = Array.from({length:7}, (_,i)=>`https://results.eci.gov.in/ResultAcGenMay2026/statewiseS11${i+1}.htm`);
 /* r.jina.ai is a public reader that returns markdown of any URL with permissive CORS.
-   We use it as the single relay because allorigins / corsproxy require paid plans. */
+   reader.jina.ai is the same service on an alternate hostname — useful when one
+   gets rate-limited or blocked by a mobile carrier. We use multiple permutations
+   so a transient failure of any single endpoint doesn't break the whole refresh. */
 const PROXIES = [
   u => `https://r.jina.ai/${u}`,
-  u => `https://r.jina.ai/http://${u.replace(/^https?:\/\//,"")}`
+  u => `https://reader.jina.ai/${u}`,
+  u => `https://r.jina.ai/http://${u.replace(/^https?:\/\//,"")}`,
+  u => `https://reader.jina.ai/http://${u.replace(/^https?:\/\//,"")}`
 ];
 
 /* ---------- Party metadata ---------- */
@@ -379,20 +383,26 @@ const JINA_HEADERS = {
   "x-with-images-summary": "false",
   "x-with-links-summary": "false"
 };
-async function fetchHTML(url, {timeoutMs = 15000} = {}){
+async function fetchHTML(url, {timeoutMs = 20000, retries = 2} = {}){
   let lastErr;
-  for (const wrap of PROXIES){
-    const ctl = new AbortController();
-    const tid = setTimeout(() => ctl.abort(), timeoutMs);
-    try{
-      // cache-buster so we always get fresh data
-      const target = wrap(url) + (wrap(url).includes("?") ? "&" : "?") + "_=" + Date.now();
-      const r = await fetch(target, {cache:"no-store", headers: JINA_HEADERS, signal: ctl.signal});
-      if (!r.ok) throw new Error("HTTP "+r.status);
-      const t = await r.text();
-      if (t && t.length > 500) return t;
-    }catch(e){ lastErr = e; }
-    finally { clearTimeout(tid); }
+  for (let attempt = 0; attempt <= retries; attempt++){
+    for (const wrap of PROXIES){
+      const ctl = new AbortController();
+      const tid = setTimeout(() => ctl.abort(), timeoutMs);
+      try{
+        // cache-buster so we always get fresh data
+        const target = wrap(url) + (wrap(url).includes("?") ? "&" : "?") + "_=" + Date.now();
+        const r = await fetch(target, {cache:"no-store", headers: JINA_HEADERS, signal: ctl.signal});
+        if (!r.ok) throw new Error("HTTP "+r.status);
+        const t = await r.text();
+        if (t && t.length > 500) return t;
+        throw new Error("empty body");
+      }catch(e){ lastErr = e; }
+      finally { clearTimeout(tid); }
+    }
+    // backoff before retrying the whole proxy list (mobile networks often
+    // recover within a second or two of a transient failure).
+    if (attempt < retries) await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
   }
   throw lastErr || new Error("All proxies failed");
 }
@@ -794,60 +804,73 @@ async function refreshAll(){
 
   // Kick off every request in parallel so the partywise summary can render
   // the moment it returns instead of blocking on the slowest statewise page.
-  const pwPromise = fetchHTML(PARTYWISE_URL);
-  const acPromises = STATEWISE_PAGES.map(u => fetchHTML(u).catch(()=>""));
+  // Both pwPromise and statewise promises are wrapped to never reject — partial
+  // data still paints if some endpoints fail, so a flaky mobile network or a
+  // rate-limited proxy doesn't blank out the page.
+  const pwPromise = fetchHTML(PARTYWISE_URL).catch(e => { console.warn("pw fetch failed", e); return ""; });
+  const acPromises = STATEWISE_PAGES.map(u => fetchHTML(u).catch(e => { console.warn("statewise fetch failed", e); return ""; }));
 
   let pwOk = false;
   // 1. Render party-wise summary as soon as it lands.
   pwPromise.then(html => {
+    if (!html) return;
     try {
       const pw = parsePartyWise(html);
       if (pw.rows.length){
         renderPartyWise(pw);
         pwOk = true;
-        saveCache({...(loadCache()||{}), pwHtml: html, ts: Date.now()});
+        try { saveCache({...(loadCache()||{}), pwHtml: html, ts: Date.now()}); } catch {}
       }
     } catch (e) { console.error("partywise render failed", e); }
-  }).catch(()=>{});
+  });
 
   // 2. Render AC rows incrementally as each statewise page resolves.
   const seen = new Map();
-  let resolved = 0;
   acPromises.forEach(p => p.then(h => {
-    resolved++;
-    if (h){
-      try {
-        parseStatewise(h).forEach(r => seen.set(r.no, r));
-        allACs = [...seen.values()];
-        buildFilterChips();
-        renderTable();
-      } catch (e) { console.error("statewise render failed", e); }
-    }
+    if (!h) return;
+    try {
+      parseStatewise(h).forEach(r => seen.set(r.no, r));
+      allACs = [...seen.values()];
+      buildFilterChips();
+      renderTable();
+    } catch (e) { console.error("statewise render failed", e); }
   }));
 
-  try{
-    const [pwHtml, ...acHtmls] = await Promise.all([pwPromise, ...acPromises]);
-    // Final consolidated pass (in case incremental renders missed anything).
-    if (!pwOk){
+  const [pwHtml, ...acHtmls] = await Promise.all([pwPromise, ...acPromises]);
+
+  // Final consolidated pass.
+  if (!pwOk && pwHtml){
+    try {
       const pw = parsePartyWise(pwHtml);
-      if (!pw.rows.length) throw new Error("Could not parse party-wise data");
-      renderPartyWise(pw);
-    }
-    acHtmls.forEach(h => { if (h) parseStatewise(h).forEach(r => seen.set(r.no, r)); });
+      if (pw.rows.length){ renderPartyWise(pw); pwOk = true; }
+    } catch(e){ console.error(e); }
+  }
+  acHtmls.forEach(h => { if (h){ try { parseStatewise(h).forEach(r => seen.set(r.no, r)); } catch(e){} } });
+  if (seen.size){
     allACs = [...seen.values()];
     buildFilterChips();
     renderTable();
-
-    saveCache({pwHtml, acHtmls, ts: Date.now()});
-    document.getElementById("liveStatus").textContent = "LIVE";
-    toast(`Updated · ${allACs.length} ACs`);
-  }catch(e){
-    console.error(e);
-    document.getElementById("liveStatus").textContent = "STALE";
-    toast("Refresh failed: "+e.message, true);
-  }finally{
-    startCountdown();
   }
+
+  const acOkCount = acHtmls.filter(Boolean).length;
+  const everythingFailed = !pwOk && acOkCount === 0;
+
+  if (everythingFailed){
+    // Network is fully down — keep whatever cached data we already painted
+    // and surface a stale indicator instead of wiping the UI.
+    document.getElementById("liveStatus").textContent = "OFFLINE";
+    toast("Could not reach ECI · check connection", true);
+  } else {
+    try { saveCache({pwHtml: pwHtml || (loadCache()||{}).pwHtml || "", acHtmls, ts: Date.now()}); } catch {}
+    if (pwOk && acOkCount === STATEWISE_PAGES.length){
+      document.getElementById("liveStatus").textContent = "LIVE";
+      toast(`Updated · ${allACs.length} ACs`);
+    } else {
+      document.getElementById("liveStatus").textContent = "PARTIAL";
+      toast(`Updated · ${allACs.length} ACs (partial)`, true);
+    }
+  }
+  startCountdown();
 }
 
 // Warm-start: paint last-known data immediately so the user sees something
