@@ -481,10 +481,28 @@ const ALLIANCE = {
   LDF: ["Communist Party of India (Marxist)","Communist Party of India","Kerala Congress (M)","Rashtriya Janata Dal"],
   NDA: ["Bharatiya Janata Party","Bharath Dharma Jana Sena"]
 };
+// Abbreviations as they appear on the ECI tables. These are matched
+// case-insensitively when the full party name lookup misses (e.g. statewise
+// pages sometimes return "Revolutionary Marxist Party of India - RMPOI" and
+// rarely just "RMPOI").
+const ALLIANCE_ABBR = {
+  UDF: ["INC","IUML","KEC","KEC(J)","KC(J)","RSP","RMPOI","RMPI","CMPKSC","CMP"],
+  LDF: ["CPI(M)","CPM","CPI","KC(M)","KEC(M)","RJD","JD(S)","JDS","NCP","NCPSP","INL","KCB"],
+  NDA: ["BJP","BDJS","AIADMK"]
+};
 const ALLIANCE_COLOR = {UDF:"#19a3e0", LDF:"#e63946", NDA:"#ff8a3d", Others:"#9aa3b2"};
 
 function allianceOf(party){
-  for (const a of Object.keys(ALLIANCE)) if (ALLIANCE[a].includes(party)) return a;
+  if (!party) return "Others";
+  // Strip trailing " - ABBR" if present.
+  const base = String(party).replace(/\s*-\s*[A-Z()]+\s*$/, "").trim();
+  for (const a of Object.keys(ALLIANCE)) if (ALLIANCE[a].includes(base)) return a;
+  // Fall back to abbreviation match (handles short codes and trailing-suffix forms).
+  const m = String(party).match(/-\s*([A-Z()]+)\s*$/);
+  const abbr = (m ? m[1] : String(party).trim()).toUpperCase();
+  for (const a of Object.keys(ALLIANCE_ABBR)){
+    if (ALLIANCE_ABBR[a].some(x => x.toUpperCase() === abbr)) return a;
+  }
   return "Others";
 }
 
@@ -529,7 +547,10 @@ function splitPipeRow(line){
 }
 
 /* Remove the noisy trailing fragment that r.jina.ai appends after party names,
-   e.g. "Indian National Congress i ### Party Wise State Trends Leading In:56 ..." */
+   e.g. "Indian National Congress i ### Party Wise State Trends Leading In:56 ..."
+   Also strips the " - ABBR" suffix that ECI's tables append (e.g.
+   "Revolutionary Marxist Party of India - RMPOI") so downstream alliance /
+   colour lookups always see the canonical full party name. */
 function cleanParty(s){
   if (!s) return "";
   return s
@@ -537,6 +558,7 @@ function cleanParty(s){
     .replace(/\s+i\s*$/i, "")
     .replace(/\s*i$/, "")
     .replace(/\[(.*?)\]\([^)]*\)/g, "$1")
+    .replace(/\s*-\s*[A-Z()]+\s*$/, "")
     .trim();
 }
 
