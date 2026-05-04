@@ -300,6 +300,123 @@
   .summary-tile .v{font-size:22px;font-weight:800;margin-top:4px;line-height:1}
   .summary-tile .s{font-size:11px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
   .modal-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+
+  /* ---------- Mobile ---------- */
+  @media(max-width:760px){
+    .wrap{padding:14px 12px 48px}
+    header{gap:10px;margin-bottom:14px}
+    h1{font-size:17px;line-height:1.25}
+    .brand .logo{width:38px;height:38px;border-radius:10px;font-size:15px}
+    .sub{font-size:11px}
+    .meta{gap:8px;width:100%}
+    .pill{padding:6px 10px;font-size:11px}
+
+    .card{padding:14px;border-radius:14px}
+    .card h3{font-size:11px;letter-spacing:1.1px}
+    .card h3 .hint{display:block;float:none;margin-top:4px;font-size:10px}
+
+    /* Hero */
+    .hero{padding:16px 14px 18px}
+    .hero-head{margin-bottom:14px;gap:12px}
+    .hero-stats{gap:10px;width:100%;justify-content:space-between}
+    .hero-stat{flex:1;min-width:0;text-align:center;padding:10px 8px;border-radius:10px;background:rgba(15,23,42,.03);border:1px solid var(--border)}
+    .hero-stat .v{font-size:22px}
+    .hero-stat .l{font-size:9px;letter-spacing:1.1px;margin-top:4px}
+    .alliance-bar.big{height:46px;font-size:12px}
+    .alliance-bar.big > div{font-size:11px;letter-spacing:.3px}
+    .hero .donut-wrap{height:220px}
+    .alliance-legend{font-size:11px;gap:8px}
+    .halfway .marker::after{font-size:9px;top:-18px}
+
+    /* KPIs */
+    .kpi .value{font-size:24px}
+    .kpi .label{font-size:10px;letter-spacing:1.1px}
+    .kpi .delta{font-size:10px}
+
+    /* Party rows */
+    .party-row{grid-template-columns:110px 1fr 44px;gap:8px}
+    .party-row .name{font-size:12px}
+    .party-row .count{font-size:13px}
+
+    /* Toolbar */
+    .toolbar{gap:8px}
+    .search{padding:9px 11px;font-size:13px;min-width:0;width:100%;flex:1 1 100%}
+    .btn{padding:9px 12px;font-size:11px;width:100%;text-align:center}
+    .chips{width:100%}
+    .chip{padding:7px 10px;font-size:11px;flex:1;text-align:center}
+
+    /* AC table → stacked card rows. Hide redundant cols, stack the rest. */
+    .table-scroll{max-height:none;border-radius:10px;overflow:visible;background:transparent;border:0}
+    #acTable{font-size:13px}
+    #acTable thead{display:none}
+    #acTable, #acTable tbody, #acTable tr, #acTable td{display:block;width:100%}
+    tbody tr.ac-row{
+      background:#ffffff;border:1px solid var(--border);border-radius:12px;
+      padding:12px 14px;margin-bottom:10px;
+      display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;
+      box-shadow:0 1px 2px rgba(15,23,42,.04);
+    }
+    tbody tr.ac-row:hover, tbody tr.ac-row.open{background:#ffffff}
+    tbody tr.ac-row.open{border-color:var(--accent);box-shadow:0 4px 14px -8px rgba(14,165,233,.4)}
+    tbody tr.ac-row.match{border-color:#d97706}
+    tbody tr.ac-row td{
+      padding:0;border:0;background:transparent;
+    }
+    /* Column order on mobile: #, name (with caret), status, leading cand, leading party, trailing cand, trailing party, margin, round */
+    tbody tr.ac-row td:nth-child(1){grid-row:1;grid-column:1;font-size:11px;color:var(--muted);font-weight:600;background:rgba(15,23,42,.05);padding:3px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace}
+    tbody tr.ac-row td:nth-child(2){grid-row:1;grid-column:2;font-size:14px;font-weight:700}
+    tbody tr.ac-row td:nth-child(9){grid-row:1;grid-column:3}
+    tbody tr.ac-row td:nth-child(3){grid-row:2;grid-column:1/-1;font-size:13px}
+    tbody tr.ac-row td:nth-child(3)::before{content:"Lead · ";color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+    tbody tr.ac-row td:nth-child(4){grid-row:3;grid-column:1/-1;font-size:12px;margin-top:-4px}
+    tbody tr.ac-row td:nth-child(5){grid-row:4;grid-column:1/-1;font-size:12px;color:var(--muted);padding-top:6px;border-top:1px dashed rgba(15,23,42,.07)}
+    tbody tr.ac-row td:nth-child(5)::before{content:"vs ";color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+    tbody tr.ac-row td:nth-child(6){grid-row:5;grid-column:1/-1;font-size:11px;margin-top:-4px}
+    tbody tr.ac-row td:nth-child(7){grid-row:6;grid-column:1;font-size:13px;font-weight:700;text-align:left !important;color:#b45309}
+    tbody tr.ac-row td:nth-child(7)::before{content:"Margin ";color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-right:4px}
+    tbody tr.ac-row td:nth-child(8){grid-row:6;grid-column:2/-1;font-size:11px;color:var(--muted);text-align:right}
+    /* Detail row also blocks */
+    tbody tr.detail{display:block;margin:-4px 0 10px}
+    tbody tr.detail td{display:block;padding:0;background:transparent;border:0}
+    .detail-inner{padding:14px;border-radius:12px;background:rgba(241,245,249,.85);border:1px solid var(--border)}
+    .detail-inner h4{font-size:11px}
+    .detail-inner h4 span{display:block;float:none !important;margin-top:4px;font-size:10px}
+    .cand{grid-template-columns:24px 1fr 70px;gap:8px;font-size:12px}
+    .cand .pt,.cand .pc{display:none}
+
+    /* Modal */
+    .modal-backdrop{padding:0}
+    .modal{width:100%;max-height:100vh;height:100vh;border-radius:0;border:0}
+    .modal-head{padding:16px 18px 14px}
+    .modal-title{font-size:18px;gap:8px}
+    .modal-title .count{font-size:28px}
+    .modal-title .of{font-size:11px}
+    .modal-eyebrow{font-size:10px;letter-spacing:1.3px}
+    .modal-meta{gap:6px;margin-top:10px}
+    .modal-meta .pill{font-size:10px;padding:4px 8px}
+    .modal-close{top:12px;right:12px;width:30px;height:30px;font-size:16px}
+    .modal-body{padding:14px 16px 18px}
+    .modal-toolbar{gap:8px}
+    .modal-toolbar .search{padding:8px 10px;font-size:12px}
+    .modal-tabs{width:100%;justify-content:space-between}
+    .modal-tab{flex:1;text-align:center;padding:6px 8px;font-size:10px}
+    .summary-tile{padding:10px}
+    .summary-tile .v{font-size:18px}
+    .summary-tile .l{font-size:9px}
+    .summary-tile .s{font-size:10px}
+
+    /* Toast */
+    .toast{left:12px;right:12px;bottom:12px;font-size:12px}
+
+    /* Footer */
+    .footer{font-size:10px;padding:0 8px}
+  }
+  /* Tap targets / touch behaviour */
+  @media(hover:none){
+    .hero-stat:hover{transform:none}
+    tbody tr.ac-row:hover{background:#ffffff}
+    .modal-row:hover{transform:none}
+  }
 </style>
 </head>
 <body>
