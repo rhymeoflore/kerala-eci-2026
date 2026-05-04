@@ -216,6 +216,90 @@
   }
   .toast.show{transform:translateY(0);opacity:1}
   .err{color:#b91c1c}
+
+  /* ---------- Alliance drill-down modal ---------- */
+  .hero-stat{cursor:pointer;transition:transform .2s, opacity .2s}
+  .hero-stat:hover{transform:translateY(-2px)}
+  .alliance-bar > div{cursor:pointer;transition:filter .2s, flex-grow .8s ease}
+  .alliance-bar > div:hover{filter:brightness(1.08)}
+  .alliance-legend span{cursor:pointer;padding:3px 8px;border-radius:99px;transition:background .15s}
+  .alliance-legend span:hover{background:rgba(15,23,42,.05);color:var(--text)}
+  .donut-wrap canvas{cursor:pointer}
+  .modal-backdrop{
+    position:fixed;inset:0;z-index:60;
+    background:rgba(15,23,42,.45);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    display:grid;place-items:center;padding:20px;
+    opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  .modal-backdrop.show{opacity:1;pointer-events:auto}
+  .modal{
+    background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.94));
+    border:1px solid var(--border);
+    border-radius:20px;
+    width:min(960px,100%);max-height:88vh;
+    display:flex;flex-direction:column;
+    box-shadow:0 30px 80px -20px rgba(15,23,42,.45),0 1px 0 rgba(255,255,255,.6) inset;
+    transform:translateY(20px) scale(.98);transition:transform .25s;
+    overflow:hidden;
+  }
+  .modal-backdrop.show .modal{transform:translateY(0) scale(1)}
+  .modal-head{
+    position:relative;
+    padding:22px 26px 18px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(135deg,var(--accent-tint,rgba(14,165,233,.08)),transparent 60%);
+  }
+  .modal-head .accent{
+    position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--modal-accent,#0ea5e9);
+  }
+  .modal-eyebrow{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .modal-title{font-size:26px;font-weight:800;margin:6px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .modal-title .count{font-size:38px;font-family:'Inter',sans-serif;color:var(--modal-accent,#0ea5e9)}
+  .modal-title .of{font-size:13px;color:var(--muted);font-weight:500;font-family:'JetBrains Mono',monospace;letter-spacing:.5px}
+  .modal-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .modal-meta .pill{font-size:11px;font-family:'JetBrains Mono',monospace}
+  .modal-close{
+    position:absolute;top:18px;right:18px;
+    width:34px;height:34px;border-radius:50%;border:1px solid var(--border);
+    background:#ffffff;color:var(--muted);font-size:18px;cursor:pointer;
+    display:grid;place-items:center;transition:.15s;line-height:1;
+  }
+  .modal-close:hover{background:var(--text);color:#ffffff;border-color:transparent;transform:rotate(90deg)}
+  .modal-body{padding:18px 26px 22px;overflow:auto;flex:1}
+  .modal-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .modal-toolbar .search{flex:1;min-width:180px}
+  .modal-tabs{display:flex;gap:6px;background:rgba(15,23,42,.04);padding:3px;border-radius:10px}
+  .modal-tab{padding:6px 12px;border-radius:8px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+  .modal-tab.active{background:#ffffff;color:var(--text);box-shadow:0 1px 3px rgba(15,23,42,.08)}
+  .modal-list{display:flex;flex-direction:column;gap:8px}
+  .modal-row{
+    display:grid;grid-template-columns:42px 1fr auto;gap:14px;align-items:center;
+    padding:12px 14px;border-radius:12px;background:#ffffff;border:1px solid var(--border);
+    transition:.15s;cursor:default;
+  }
+  .modal-row:hover{border-color:var(--modal-accent,#0ea5e9);transform:translateX(2px);box-shadow:0 4px 14px -8px rgba(15,23,42,.18)}
+  .modal-row .ac-no{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:13px;text-align:right}
+  .modal-row .ac-meta .nm{font-weight:700;font-size:14px}
+  .modal-row .ac-meta .cd{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .modal-row .ac-meta .cd i{display:inline-block;width:7px;height:7px;border-radius:50%}
+  .modal-row .ac-meta .opp{color:#94a3b8;font-size:11px;font-style:italic}
+  .modal-row .ac-stats{text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+  .modal-row .margin-tag{font-family:'JetBrains Mono',monospace;font-size:13px;color:#b45309;font-weight:700}
+  .modal-row .status-mini{font-size:9px;padding:2px 8px;border-radius:99px;background:rgba(255,138,61,.12);color:#c2410c;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+  .modal-row .status-mini.declared{background:rgba(16,185,129,.15);color:#047857}
+  .modal-summary{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;
+  }
+  @media(max-width:640px){.modal-summary{grid-template-columns:repeat(2,1fr)} .modal-row{grid-template-columns:34px 1fr;gap:10px} .modal-row .ac-stats{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px dashed rgba(15,23,42,.08)}}
+  .summary-tile{
+    background:rgba(15,23,42,.03);border:1px solid var(--border);
+    border-radius:12px;padding:12px 14px;
+  }
+  .summary-tile .l{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .summary-tile .v{font-size:22px;font-weight:800;margin-top:4px;line-height:1}
+  .summary-tile .s{font-size:11px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
+  .modal-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
@@ -329,6 +413,36 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Alliance drill-down modal -->
+<div class="modal-backdrop" id="allianceModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="accent" id="modalAccent"></div>
+      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+      <div class="modal-eyebrow" id="modalEyebrow">Alliance Drill-down</div>
+      <h2 class="modal-title" id="modalTitle">
+        <span id="modalName">—</span>
+        <span class="count" id="modalCount">0</span>
+        <span class="of">/ 140 seats</span>
+      </h2>
+      <div class="modal-meta" id="modalMeta"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-summary" id="modalSummary"></div>
+      <div class="modal-toolbar">
+        <input class="search" id="modalSearch" placeholder="Filter by constituency, candidate, party…" />
+        <div class="modal-tabs" id="modalTabs">
+          <div class="modal-tab active" data-k="all">All</div>
+          <div class="modal-tab" data-k="declared">Declared</div>
+          <div class="modal-tab" data-k="leading">Leading</div>
+          <div class="modal-tab" data-k="close">Close (&lt;5k)</div>
+        </div>
+      </div>
+      <div class="modal-list" id="modalList"></div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ---------- Config ---------- */
@@ -486,7 +600,14 @@ function ensureCharts(){
       data:{labels:["UDF","LDF","NDA","Others"], datasets:[{data:[0,0,0,0],
         backgroundColor:[ALLIANCE_COLOR.UDF,ALLIANCE_COLOR.LDF,ALLIANCE_COLOR.NDA,ALLIANCE_COLOR.Others],
         borderColor:"#ffffff", borderWidth:3, hoverOffset:8}]},
-      options:{cutout:"72%", plugins:{legend:{position:"bottom",labels:{color:"#475569",boxWidth:10,font:{size:11}}},
+      options:{cutout:"72%",
+        onClick:(evt, items) => {
+          if (items && items.length && typeof openAllianceModal === "function"){
+            const name = ["UDF","LDF","NDA","Others"][items[0].index];
+            if (name) openAllianceModal(name);
+          }
+        },
+        plugins:{legend:{position:"bottom",labels:{color:"#475569",boxWidth:10,font:{size:11}}},
         tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed} seats`}}}, animation:{duration:800}}
     });
   }
@@ -997,6 +1118,173 @@ async function runDeepSearch(){
         failed.length > 0);
 }
 document.getElementById("deepBtn").addEventListener("click", runDeepSearch);
+
+/* ---------- Alliance drill-down modal ---------- */
+let modalAlliance = null;
+let modalFilter = "all";
+
+function openAllianceModal(name){
+  modalAlliance = name;
+  modalFilter = "all";
+  // Reset internal toolbar
+  const search = document.getElementById("modalSearch");
+  search.value = "";
+  document.querySelectorAll("#modalTabs .modal-tab").forEach(t =>
+    t.classList.toggle("active", t.dataset.k === "all"));
+  document.getElementById("modalEyebrow").textContent = `${name} Alliance · Drill-down`;
+  document.getElementById("modalName").textContent = name;
+  // Theme accent
+  const color = ALLIANCE_COLOR[name] || "#0ea5e9";
+  document.getElementById("modalAccent").style.background = color;
+  document.querySelector(".modal-head").style.setProperty("--modal-accent", color);
+  document.querySelector(".modal-head").style.setProperty("--accent-tint", color + "1f"); // ~12% alpha
+  document.querySelector(".modal").style.setProperty("--modal-accent", color);
+
+  renderAllianceModal();
+  const back = document.getElementById("allianceModal");
+  back.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeAllianceModal(){
+  document.getElementById("allianceModal").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+function renderAllianceModal(){
+  if (!modalAlliance) return;
+  const all = allACs.filter(r => allianceOf(r.leadParty) === modalAlliance);
+  const declared = all.filter(r => /declared/i.test(r.status));
+  const leading = all.filter(r => !/declared/i.test(r.status));
+  const close = all.filter(r => Math.abs(r.margin) > 0 && Math.abs(r.margin) < 5000);
+  const totalVotes = all.reduce((s,r)=>s+r.margin,0);
+  const avgMargin = all.length ? Math.round(totalVotes/all.length) : 0;
+  const biggest = all.slice().sort((a,b)=>b.margin-a.margin)[0];
+
+  document.getElementById("modalCount").textContent = all.length;
+
+  // Meta pills
+  const meta = document.getElementById("modalMeta");
+  const partyBreakdown = {};
+  all.forEach(r => { partyBreakdown[r.leadParty] = (partyBreakdown[r.leadParty]||0)+1; });
+  const partyChips = Object.entries(partyBreakdown).sort((a,b)=>b[1]-a[1]).map(([p,n]) => {
+    const c = PARTY_COLORS[p] || "#9aa3b2";
+    return `<div class="pill"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:4px"></i>${shortParty(p)} · <b style="color:var(--text);margin-left:4px">${n}</b></div>`;
+  }).join("");
+  meta.innerHTML = partyChips || `<div class="pill" style="color:var(--muted)">No seats yet</div>`;
+
+  // Summary tiles
+  const sum = document.getElementById("modalSummary");
+  sum.innerHTML = `
+    <div class="summary-tile"><div class="l">Total</div><div class="v" style="color:${ALLIANCE_COLOR[modalAlliance]}">${all.length}</div><div class="s">of 140</div></div>
+    <div class="summary-tile"><div class="l">Declared</div><div class="v">${declared.length}</div><div class="s">${all.length?Math.round(declared.length/all.length*100):0}% of bucket</div></div>
+    <div class="summary-tile"><div class="l">Leading</div><div class="v">${leading.length}</div><div class="s">awaiting result</div></div>
+    <div class="summary-tile"><div class="l">Avg Margin</div><div class="v">${avgMargin.toLocaleString("en-IN")}</div><div class="s">${biggest?'biggest: '+biggest.margin.toLocaleString("en-IN"):'—'}</div></div>
+  `;
+
+  // Filtered list
+  const q = document.getElementById("modalSearch").value.trim().toLowerCase();
+  let rows = all.slice();
+  if (modalFilter === "declared") rows = declared;
+  else if (modalFilter === "leading") rows = leading;
+  else if (modalFilter === "close") rows = close;
+  if (q){
+    rows = rows.filter(r =>
+      r.ac.toLowerCase().includes(q) ||
+      r.leadCand.toLowerCase().includes(q) ||
+      r.trailCand.toLowerCase().includes(q) ||
+      r.leadParty.toLowerCase().includes(q) ||
+      r.trailParty.toLowerCase().includes(q)
+    );
+  }
+  rows.sort((a,b)=>b.margin-a.margin);
+
+  const list = document.getElementById("modalList");
+  if (!rows.length){
+    list.innerHTML = `<div class="modal-empty">No constituencies match this filter${q?` for "${escapeHTML(q)}"`:""}.</div>`;
+    return;
+  }
+  list.innerHTML = rows.map(r => {
+    const c = PARTY_COLORS[r.leadParty] || "#9aa3b2";
+    const isDecl = /declared/i.test(r.status);
+    return `
+      <div class="modal-row" data-no="${r.no}">
+        <div class="ac-no">${r.no}</div>
+        <div class="ac-meta">
+          <div class="nm">${escapeHTML(r.ac)}</div>
+          <div class="cd"><i style="background:${c}"></i><b>${escapeHTML(r.leadCand)}</b> · ${shortParty(r.leadParty)}</div>
+          <div class="opp">vs ${escapeHTML(r.trailCand)} (${shortParty(r.trailParty)}) · ${escapeHTML(r.round)}</div>
+        </div>
+        <div class="ac-stats">
+          <div class="margin-tag">+${r.margin.toLocaleString("en-IN")}</div>
+          <div class="status-mini ${isDecl?'declared':''}">${escapeHTML(r.status)}</div>
+        </div>
+      </div>`;
+  }).join("");
+
+  // Click → expand the AC in the main table and close modal
+  list.querySelectorAll(".modal-row").forEach(el => {
+    el.addEventListener("click", () => {
+      const no = parseInt(el.dataset.no, 10);
+      openACs.add(no);
+      renderTable();
+      closeAllianceModal();
+      // Scroll the matching row into view
+      requestAnimationFrame(() => {
+        const tr = document.querySelector(`tr.ac-row[data-no="${no}"]`);
+        if (tr) tr.scrollIntoView({behavior:"smooth", block:"center"});
+        if (!candidatesByAC.has(no)){
+          loadACDetails(no).then(renderTable).catch(()=>{});
+        }
+      });
+    });
+  });
+}
+
+// Wire up modal triggers (hero stats, alliance bar, legend, donut)
+document.getElementById("modalClose").addEventListener("click", closeAllianceModal);
+document.getElementById("allianceModal").addEventListener("click", (e) => {
+  if (e.target.id === "allianceModal") closeAllianceModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeAllianceModal();
+});
+document.getElementById("modalSearch").addEventListener("input", renderAllianceModal);
+document.querySelectorAll("#modalTabs .modal-tab").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll("#modalTabs .modal-tab").forEach(o => o.classList.remove("active"));
+    t.classList.add("active");
+    modalFilter = t.dataset.k;
+    renderAllianceModal();
+  });
+});
+function bindAllianceTriggers(){
+  document.querySelectorAll("#heroStats .hero-stat").forEach((el, i) => {
+    const name = ["UDF","LDF","NDA","Others"][i];
+    if (!name) return;
+    el.onclick = () => openAllianceModal(name);
+    el.setAttribute("title", `Click for ${name} drill-down`);
+  });
+  document.querySelectorAll("#allianceBar > div").forEach(el => {
+    const txt = (el.textContent||"").trim().split(" ")[0];
+    if (["UDF","LDF","NDA","Others"].includes(txt)){
+      el.onclick = () => openAllianceModal(txt);
+      el.setAttribute("title", `Click for ${txt} drill-down`);
+    }
+  });
+  document.querySelectorAll("#allianceLegend span").forEach(el => {
+    const txt = (el.textContent||"").trim().split(" ")[0];
+    if (["UDF","LDF","NDA","Others"].includes(txt)){
+      el.onclick = () => openAllianceModal(txt);
+    }
+  });
+}
+// Re-bind after each renderPartyWise (which rewrites the hero/legend)
+const _origRenderPartyWise = renderPartyWise;
+renderPartyWise = function(...args){
+  _origRenderPartyWise.apply(this, args);
+  bindAllianceTriggers();
+};
 
 buildFilterChips();
 ensureCharts();
