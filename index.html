@@ -379,17 +379,20 @@ const JINA_HEADERS = {
   "x-with-images-summary": "false",
   "x-with-links-summary": "false"
 };
-async function fetchHTML(url){
+async function fetchHTML(url, {timeoutMs = 15000} = {}){
   let lastErr;
   for (const wrap of PROXIES){
+    const ctl = new AbortController();
+    const tid = setTimeout(() => ctl.abort(), timeoutMs);
     try{
       // cache-buster so we always get fresh data
       const target = wrap(url) + (wrap(url).includes("?") ? "&" : "?") + "_=" + Date.now();
-      const r = await fetch(target, {cache:"no-store", headers: JINA_HEADERS});
+      const r = await fetch(target, {cache:"no-store", headers: JINA_HEADERS, signal: ctl.signal});
       if (!r.ok) throw new Error("HTTP "+r.status);
       const t = await r.text();
       if (t && t.length > 500) return t;
     }catch(e){ lastErr = e; }
+    finally { clearTimeout(tid); }
   }
   throw lastErr || new Error("All proxies failed");
 }
@@ -872,20 +875,26 @@ function paintFromCache(){
   return painted;
 }
 
-document.getElementById("search").addEventListener("input", renderTable);
+document.getElementById("search").addEventListener("input", () => {
+  renderTable();
+  // First time the user types anything, kick off deep search in the
+  // background so candidate names beyond the leader/trailer become findable
+  // without requiring an extra click.
+  const q = document.getElementById("search").value.trim();
+  if (q && !deepLoaded && !deepInProgress && allACs.length){
+    runDeepSearch();
+  }
+});
 
 /* ---------- Deep candidate search: load all 140 detail pages with a progress bar ---------- */
-async function loadACDetailsWithRetry(no, attempts = 3){
-  let lastErr;
-  for (let k=0; k<attempts; k++){
-    try { return await loadACDetails(no); }
-    catch(e){
-      lastErr = e;
-      // Back off progressively to avoid r.jina.ai rate limiting
-      await new Promise(res => setTimeout(res, 400 + k*600));
-    }
-  }
-  throw lastErr;
+async function loadACDetailsOnce(no){
+  // Single attempt with a tight timeout so a slow proxy response can't
+  // stall a worker slot for long.
+  const md = await fetchHTML(acDetailURL(no), {timeoutMs: 5000});
+  const cands = parseCandidates(md);
+  if (!cands.length) throw new Error("empty");
+  candidatesByAC.set(no, cands);
+  return cands;
 }
 
 async function runDeepSearch(){
@@ -901,48 +910,68 @@ async function runDeepSearch(){
   const list = allACs.slice().sort((a,b)=>a.no-b.no);
   const total = list.length;
   let done = 0;
+  let lastRender = 0;
   const updateBar = () => {
     const pct = total ? Math.round((done/total)*100) : 0;
     fill.style.width = pct + "%";
     label.textContent = `Loaded ${done}/${total} constituencies · ${pct}%`;
+    // Re-render at most ~5x/s so the UI stays smooth while many workers
+    // are completing in parallel.
+    const now = performance.now();
+    if (now - lastRender > 200){ lastRender = now; renderTable(); }
   };
 
-  // Lower concurrency to avoid the r.jina.ai relay rate-limiting and
-  // dropping requests silently (which left candidatesByAC incomplete).
-  const BATCH = 3;
-  for (let i=0; i<list.length; i+=BATCH){
-    const batch = list.slice(i, i+BATCH).filter(r => !candidatesByAC.has(r.no));
-    await Promise.all(batch.map(async r => {
-      try { await loadACDetailsWithRetry(r.no, 3); }
-      catch(e){ /* will be picked up by the final retry pass */ }
+  // Worker-pool: keep CONCURRENCY in-flight at all times, no per-batch barrier.
+  // Earlier code used BATCH=3 with sequential retries which was the main
+  // source of slowness — most ACs succeed on the first try, so retry only
+  // the stragglers at the very end.
+  const queue = list.map(r => r.no).filter(no => !candidatesByAC.has(no));
+  // Account for ACs that are already cached (e.g. user expanded them earlier).
+  done = total - queue.length;
+  updateBar();
+  const CONCURRENCY = 10;
+  const failed = [];
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < queue.length){
+      const no = queue[cursor++];
+      try { await loadACDetailsOnce(no); }
+      catch(e){ failed.push(no); }
       finally { done++; updateBar(); }
-    }));
-    // Account for any ACs in this batch that were already cached (skipped above).
-    done = Math.max(done, Math.min(total, i + BATCH));
-    updateBar();
-    renderTable();
-  }
-
-  // Final retry pass for any AC still missing after the main loop.
-  let missing = list.filter(r => !candidatesByAC.has(r.no));
-  if (missing.length){
-    label.textContent = `Retrying ${missing.length} constituencies…`;
-    for (const r of missing){
-      try { await loadACDetailsWithRetry(r.no, 4); } catch(e){}
     }
-  }
-  missing = list.filter(r => !candidatesByAC.has(r.no));
-  const loaded = total - missing.length;
+  };
+  await Promise.all(Array.from({length: CONCURRENCY}, worker));
 
+  // Single retry sweep for stragglers, with mild backoff and longer timeout.
+  if (failed.length){
+    label.textContent = `Retrying ${failed.length} constituencies…`;
+    const retryQueue = failed.slice();
+    failed.length = 0;
+    let rcursor = 0;
+    const retryWorker = async () => {
+      while (rcursor < retryQueue.length){
+        const no = retryQueue[rcursor++];
+        try {
+          const md = await fetchHTML(acDetailURL(no), {timeoutMs: 12000});
+          const cands = parseCandidates(md);
+          if (cands.length) candidatesByAC.set(no, cands);
+          else failed.push(no);
+        } catch(e){ failed.push(no); }
+      }
+    };
+    await Promise.all(Array.from({length: 4}, retryWorker));
+  }
+
+  const loaded = total - failed.length;
   deepLoaded = true; deepInProgress = false;
-  btn.textContent = missing.length ? `Deep search (${loaded}/${total})` : "Deep search ready";
-  label.textContent = missing.length
-    ? `${loaded}/${total} loaded · ${missing.length} could not be fetched`
+  btn.textContent = failed.length ? `Deep search (${loaded}/${total})` : "Deep search ready";
+  label.textContent = failed.length
+    ? `${loaded}/${total} loaded · ${failed.length} could not be fetched`
     : `All ${total} constituencies loaded · search any candidate`;
   renderTable();
   setTimeout(()=>{ wrap.style.display = "none"; }, 2200);
-  toast(missing.length ? `Deep search ready (${loaded}/${total})` : "Deep candidate search enabled",
-        missing.length > 0);
+  toast(failed.length ? `Deep search ready (${loaded}/${total})` : "Deep candidate search enabled",
+        failed.length > 0);
 }
 document.getElementById("deepBtn").addEventListener("click", runDeepSearch);
 
