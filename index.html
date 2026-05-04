@@ -809,6 +809,9 @@ function renderDetailRow(r, cands, query){
 function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
 function renderTable(){
+  // Preserve scroll position across the innerHTML rewrite so the page doesn't
+  // jump on every refresh / filter change.
+  const _scrollY = window.scrollY;
   const q = document.getElementById("search").value.trim().toLowerCase();
   const tbody = document.getElementById("acBody");
   let rows = allACs.slice();
@@ -880,6 +883,8 @@ function renderTable(){
       renderTable();
     });
   });
+  // Restore scroll after the DOM rewrite.
+  window.scrollTo(0, _scrollY);
 }
 
 function buildFilterChips(){
@@ -892,6 +897,20 @@ function buildFilterChips(){
 }
 
 /* ---------- Refresh ---------- */
+// "Busy" = user is actively reading/filtering/searching the table.
+// While busy we still pull fresh numbers (hero tally, alliance bar, charts,
+// open modal) but we leave the table DOM alone so scroll / focus / open rows
+// don't get wiped on every 30-second tick.
+function isUserBusy(){
+  try {
+    if (modalAlliance) return true;
+    if (openACs && openACs.size) return true;
+    const s = document.getElementById("search");
+    if (s && s.value && s.value.trim()) return true;
+    if (typeof activeFilter !== "undefined" && activeFilter !== "ALL") return true;
+  } catch(e){}
+  return false;
+}
 let countdown = REFRESH_MS/1000, timer;
 function startCountdown(){
   clearInterval(timer);
@@ -945,16 +964,17 @@ async function refreshAll(){
     } catch (e) { console.error("partywise render failed", e); }
   });
 
-  // 2. Render AC rows incrementally as each statewise page resolves.
+  // 2. Collect AC rows as each statewise page resolves, but DO NOT re-render
+  //    the table on every page — that wipes the tbody DOM and blows away the
+  //    user's scroll position / open rows / focus on mobile. We just update the
+  //    in-memory list and let the consolidated final pass below paint once.
   const seen = new Map();
   acPromises.forEach(p => p.then(h => {
     if (!h) return;
     try {
       parseStatewise(h).forEach(r => seen.set(r.no, r));
       allACs = [...seen.values()];
-      buildFilterChips();
-      renderTable();
-    } catch (e) { console.error("statewise render failed", e); }
+    } catch (e) { console.error("statewise parse failed", e); }
   }));
 
   const [pwHtml, ...acHtmls] = await Promise.all([pwPromise, ...acPromises]);
@@ -970,7 +990,15 @@ async function refreshAll(){
   if (seen.size){
     allACs = [...seen.values()];
     buildFilterChips();
-    renderTable();
+    // Only repaint the (heavy) table when the user is NOT actively interacting
+    // with it. The hero / numbers / charts always update — but the table DOM
+    // stays put if the user is reading a row, has a filter, or is searching.
+    if (isUserBusy()){
+      // still refresh the modal numbers in place if it's open
+      if (modalAlliance) try { renderAllianceModal(); } catch(e){}
+    } else {
+      renderTable();
+    }
   }
 
   const acOkCount = acHtmls.filter(Boolean).length;
