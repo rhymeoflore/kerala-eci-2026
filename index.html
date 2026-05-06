@@ -430,9 +430,9 @@
       </div>
     </div>
     <div class="meta">
-      <div class="pill"><span class="live-dot"></span><span id="liveStatus">LIVE</span></div>
+      <div class="pill"><span class="live-dot" style="background:#64748b;animation:none"></span><span id="liveStatus">FINAL</span></div>
       <div class="pill">Last update: <span id="lastUpdated" style="color:var(--text);margin-left:6px">—</span></div>
-      <div class="pill">Next refresh in <span class="countdown" id="countdown">30s</span></div>
+      <div class="pill" id="refreshPill" style="cursor:default">Auto-refresh disabled</div>
     </div>
   </header>
 
@@ -523,7 +523,7 @@
   </div>
 
   <div class="footer">
-    Auto-refreshes every 30 seconds · Data is fetched live from
+    Final results snapshot · Data was fetched from
     <a href="https://results.eci.gov.in/ResultAcGenMay2026/partywiseresult-S11.htm" target="_blank">results.eci.gov.in</a>
     via a public CORS relay. Final figures will be in Form-20.
   </div>
@@ -1036,10 +1036,9 @@ function buildFilterChips(){
 }
 
 /* ---------- Refresh ---------- */
-// "Busy" = user is actively reading/filtering/searching the table.
-// While busy we still pull fresh numbers (hero tally, alliance bar, charts,
-// open modal) but we leave the table DOM alone so scroll / focus / open rows
-// don't get wiped on every 30-second tick.
+// Auto-refresh has been disabled — results are final. We still call refreshAll()
+// once on load to pull the latest snapshot, but the recurring countdown timer
+// is a no-op so the page stays put.
 function isUserBusy(){
   try {
     if (modalAlliance) return true;
@@ -1050,16 +1049,12 @@ function isUserBusy(){
   } catch(e){}
   return false;
 }
-let countdown = REFRESH_MS/1000, timer;
+let countdown = 0, timer;
 function startCountdown(){
+  // intentionally a no-op; auto-refresh is disabled.
   clearInterval(timer);
-  countdown = REFRESH_MS/1000;
-  document.getElementById("countdown").textContent = countdown+"s";
-  timer = setInterval(()=>{
-    countdown--;
-    document.getElementById("countdown").textContent = countdown+"s";
-    if (countdown<=0) { clearInterval(timer); refreshAll(); }
-  },1000);
+  const el = document.getElementById("refreshPill");
+  if (el) el.textContent = "Auto-refresh disabled";
 }
 
 function toast(msg, isErr){
@@ -1151,11 +1146,11 @@ async function refreshAll(){
   } else {
     try { saveCache({pwHtml: pwHtml || (loadCache()||{}).pwHtml || "", acHtmls, ts: Date.now()}); } catch {}
     if (pwOk && acOkCount === STATEWISE_PAGES.length){
-      document.getElementById("liveStatus").textContent = "LIVE";
-      toast(`Updated · ${allACs.length} ACs`);
+      document.getElementById("liveStatus").textContent = "FINAL";
+      toast(`Final results loaded · ${allACs.length} ACs`);
     } else {
       document.getElementById("liveStatus").textContent = "PARTIAL";
-      toast(`Updated · ${allACs.length} ACs (partial)`, true);
+      toast(`Loaded · ${allACs.length} ACs (partial)`, true);
     }
   }
   startCountdown();
