@@ -12,40 +12,87 @@
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  // Apply theme before paint to avoid FOUC.
+  (function(){
+    try{
+      var saved = localStorage.getItem("theme");
+      var sysDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var t = saved || (sysDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", t);
+    }catch(e){ document.documentElement.setAttribute("data-theme","light"); }
+  })();
+</script>
 <style>
-  :root{
+  :root, :root[data-theme="light"]{
     --bg:#f5f7fb;
     --bg2:#ffffff;
+    --surface:#ffffff;
+    --surface-2:rgba(15,23,42,.04);
+    --surface-3:rgba(241,245,249,.85);
+    --row-hover:rgba(14,165,233,.06);
+    --row-open:rgba(14,165,233,.08);
+    --row-match:rgba(217,119,6,.08);
+    --track:rgba(15,23,42,.06);
+    --track-soft:rgba(15,23,42,.05);
+    --dash:rgba(15,23,42,.07);
     --panel:rgba(255,255,255,0.85);
     --panel-strong:rgba(255,255,255,0.95);
+    --card-grad:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.85));
+    --thead-grad:linear-gradient(180deg,#ffffff,rgba(255,255,255,.92));
+    --body-grad:radial-gradient(1200px 600px at 80% -10%, rgba(14,165,233,.10), transparent 60%),
+                radial-gradient(900px 500px at -10% 30%, rgba(255,138,61,.07), transparent 60%),
+                radial-gradient(900px 600px at 50% 120%, rgba(230,57,70,.06), transparent 60%),
+                linear-gradient(180deg,#fafbff 0%, #f3f5fb 100%);
     --border:rgba(15,23,42,0.08);
     --text:#0f172a;
     --muted:#64748b;
+    --hint:#5b6580;
     --accent:#0ea5e9;
     --gold:#d97706;
-    --inc:#19a3e0;        /* Congress */
-    --cpim:#e63946;       /* CPI(M) */
-    --cpi:#f08a3e;        /* CPI */
-    --iuml:#2a9d8f;       /* IUML */
-    --bjp:#ff8a3d;        /* BJP */
-    --kec:#ffd166;        /* KEC */
-    --kecm:#b388ff;       /* KEC(M) */
-    --rsp:#ef476f;        /* RSP */
-    --ind:#9aa3b2;        /* IND */
-    --udf:#19a3e0;
-    --ldf:#e63946;
-    --nda:#ff8a3d;
-    --oth:#9aa3b2;
+    --margin:#b45309;
+    --shadow-card:0 1px 0 rgba(255,255,255,.6) inset, 0 12px 30px -16px rgba(15,23,42,.18), 0 2px 6px rgba(15,23,42,.04);
+    --shadow-pill:0 1px 2px rgba(15,23,42,.04);
+    --inc:#19a3e0; --cpim:#e63946; --cpi:#f08a3e; --iuml:#2a9d8f; --bjp:#ff8a3d;
+    --kec:#ffd166; --kecm:#b388ff; --rsp:#ef476f; --ind:#9aa3b2;
+    --udf:#19a3e0; --ldf:#e63946; --nda:#ff8a3d; --oth:#9aa3b2;
+  }
+  :root[data-theme="dark"]{
+    --bg:#070b18;
+    --bg2:#0f172a;
+    --surface:#111a2e;
+    --surface-2:rgba(148,163,184,.08);
+    --surface-3:rgba(15,23,42,.55);
+    --row-hover:rgba(56,189,248,.10);
+    --row-open:rgba(56,189,248,.14);
+    --row-match:rgba(251,191,36,.14);
+    --track:rgba(148,163,184,.14);
+    --track-soft:rgba(148,163,184,.10);
+    --dash:rgba(148,163,184,.14);
+    --panel:rgba(17,26,46,.78);
+    --panel-strong:rgba(17,26,46,.92);
+    --card-grad:linear-gradient(180deg,rgba(20,30,55,.85),rgba(15,23,42,.78));
+    --thead-grad:linear-gradient(180deg,rgba(17,26,46,.96),rgba(17,26,46,.86));
+    --body-grad:radial-gradient(1200px 700px at 75% -15%, rgba(14,165,233,.18), transparent 60%),
+                radial-gradient(1000px 600px at -10% 30%, rgba(99,102,241,.14), transparent 60%),
+                radial-gradient(1000px 700px at 50% 120%, rgba(230,57,70,.12), transparent 60%),
+                linear-gradient(180deg,#070b18 0%, #0a1126 100%);
+    --border:rgba(148,163,184,0.16);
+    --text:#e6ecf7;
+    --muted:#94a3b8;
+    --hint:#94a3b8;
+    --accent:#38bdf8;
+    --gold:#f59e0b;
+    --margin:#fbbf24;
+    --shadow-card:0 1px 0 rgba(255,255,255,.04) inset, 0 30px 60px -30px rgba(0,0,0,.60), 0 2px 6px rgba(0,0,0,.30);
+    --shadow-pill:0 1px 2px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
   body{
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(14,165,233,.10), transparent 60%),
-      radial-gradient(900px 500px at -10% 30%, rgba(255,138,61,.07), transparent 60%),
-      radial-gradient(900px 600px at 50% 120%, rgba(230,57,70,.06), transparent 60%),
-      linear-gradient(180deg,#fafbff 0%, #f3f5fb 100%);
+    background: var(--body-grad);
     min-height:100vh;
+    transition: background .35s ease, color .25s ease;
   }
   .wrap{max-width:1500px;margin:0 auto;padding:28px 28px 64px}
   header{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:22px}
@@ -61,10 +108,10 @@
   .meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .pill{
     display:inline-flex;align-items:center;gap:8px;
-    padding:8px 12px;border-radius:999px;
-    background:#ffffff;border:1px solid var(--border);
-    font-size:12px;color:var(--muted);
-    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    height:32px;padding:0 12px;border-radius:999px;
+    background:var(--surface);border:1px solid var(--border);
+    font-size:12px;color:var(--muted);line-height:1;
+    box-shadow:var(--shadow-pill);
   }
   .live-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 0 rgba(16,185,129,.7);animation:pulse 1.6s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 14px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
@@ -312,8 +359,12 @@
     h1{font-size:17px;line-height:1.25}
     .brand .logo{width:38px;height:38px;border-radius:10px;font-size:15px}
     .sub{font-size:11px}
-    .meta{gap:8px;width:100%}
-    .pill{padding:6px 10px;font-size:11px}
+    .meta{gap:8px;width:100%;justify-content:flex-start;align-items:center}
+    .pill{height:28px;padding:0 10px;font-size:11px}
+    .map-trigger{height:28px;padding:0 12px;font-size:11px;letter-spacing:.1px}
+    .map-trigger svg{width:13px;height:13px}
+    .theme-toggle{width:28px;height:28px}
+    .theme-toggle svg{width:14px;height:14px}
 
     .card{padding:14px;border-radius:14px}
     .card h3{font-size:11px;letter-spacing:1.1px}
@@ -422,11 +473,11 @@
     .modal-row:hover{transform:none}
   }
 
-  /* Kerala map trigger button */
+  /* Kerala map trigger button — height-locked to .pill (32px) for clean header alignment */
   .map-trigger{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:8px 14px;border-radius:999px;cursor:pointer;
-    font:600 12px/1 'Inter',system-ui,sans-serif;letter-spacing:.2px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    height:32px;padding:0 14px;border-radius:999px;cursor:pointer;
+    font:600 12px/1 'Inter',system-ui,sans-serif;letter-spacing:.2px;white-space:nowrap;
     color:#fff;border:0;
     background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 50%,#e63946 100%);
     box-shadow:
@@ -435,11 +486,87 @@
       inset 0 1px 0 rgba(255,255,255,.30);
     transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
   }
-  .map-trigger svg{opacity:.95}
+  .map-trigger svg{opacity:.95;flex:none}
   .map-trigger:hover{transform:translateY(-1px);filter:brightness(1.06);
     box-shadow:0 14px 30px -10px rgba(99,102,241,.65), 0 3px 8px rgba(15,23,42,.14), inset 0 1px 0 rgba(255,255,255,.35);}
   .map-trigger:active{transform:translateY(0);filter:brightness(.96)}
-  .map-trigger:focus-visible{outline:2px solid #fff;outline-offset:3px}
+  .map-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  /* Theme toggle */
+  .theme-toggle{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:50%;cursor:pointer;
+    background:var(--surface);border:1px solid var(--border);
+    color:var(--text);position:relative;flex:none;
+    box-shadow:var(--shadow-pill);
+    transition:background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+  }
+  .theme-toggle:hover{transform:translateY(-1px);border-color:var(--accent)}
+  .theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .theme-toggle svg{width:16px;height:16px;transition:transform .35s cubic-bezier(.2,.7,.2,1), opacity .2s ease;position:absolute}
+  .theme-toggle .icon-sun{opacity:0;transform:rotate(-90deg) scale(.6)}
+  .theme-toggle .icon-moon{opacity:1;transform:rotate(0) scale(1)}
+  :root[data-theme="dark"] .theme-toggle .icon-sun{opacity:1;transform:rotate(0) scale(1)}
+  :root[data-theme="dark"] .theme-toggle .icon-moon{opacity:0;transform:rotate(90deg) scale(.6)}
+  :root[data-theme="dark"] .theme-toggle{background:linear-gradient(135deg,rgba(56,189,248,.18),rgba(99,102,241,.22));border-color:rgba(148,163,184,.30);color:#fde68a}
+
+  /* ---------------- Dark theme element overrides ---------------- */
+  :root[data-theme="dark"] .card{background:var(--card-grad);box-shadow:var(--shadow-card)}
+  :root[data-theme="dark"] .card::before{background:linear-gradient(135deg,rgba(56,189,248,.10),transparent 35%);mix-blend-mode:screen}
+  :root[data-theme="dark"] .pill{background:var(--surface);color:var(--muted)}
+  :root[data-theme="dark"] .search,
+  :root[data-theme="dark"] .chip{background:var(--surface);color:var(--muted)}
+  :root[data-theme="dark"] .chip:hover{color:var(--text)}
+  :root[data-theme="dark"] .chip.active{color:#fff;background:linear-gradient(135deg,#0ea5e9,#38bdf8)}
+  :root[data-theme="dark"] thead th{background:var(--thead-grad);color:var(--muted)}
+  :root[data-theme="dark"] tbody td{border-bottom-color:var(--dash)}
+  :root[data-theme="dark"] tbody tr:hover{background:var(--row-hover)}
+  :root[data-theme="dark"] tbody tr.ac-row:hover{background:var(--row-hover)}
+  :root[data-theme="dark"] tbody tr.ac-row.open{background:var(--row-open)}
+  :root[data-theme="dark"] tbody tr.ac-row.match{background:var(--row-match)}
+  :root[data-theme="dark"] tbody tr.detail td{background:var(--surface-3)}
+  :root[data-theme="dark"] .table-scroll{background:var(--surface)}
+  :root[data-theme="dark"] .margin{color:var(--margin)}
+  :root[data-theme="dark"] .status-tag{background:rgba(255,138,61,.18);color:#fdba74}
+  :root[data-theme="dark"] .alliance-bar{box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  :root[data-theme="dark"] .halfway,
+  :root[data-theme="dark"] .party-row .track,
+  :root[data-theme="dark"] .deep-bar,
+  :root[data-theme="dark"] .cand-track{background:var(--track)}
+  :root[data-theme="dark"] .skeleton{background:linear-gradient(90deg,rgba(148,163,184,.06),rgba(148,163,184,.14),rgba(148,163,184,.06));background-size:200% 100%}
+  :root[data-theme="dark"] .toast{background:var(--surface);color:var(--text);box-shadow:0 18px 40px -10px rgba(0,0,0,.7)}
+  :root[data-theme="dark"] .modal{background:linear-gradient(180deg,rgba(20,30,55,.98),rgba(15,23,42,.96));box-shadow:0 50px 110px -30px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.04) inset}
+  :root[data-theme="dark"] .modal-backdrop{background:rgba(2,6,23,.65)}
+  :root[data-theme="dark"] .modal-close{background:var(--surface);color:var(--muted);border-color:var(--border)}
+  :root[data-theme="dark"] .modal-close:hover{background:#fff;color:#0f172a}
+  :root[data-theme="dark"] .modal-tabs{background:var(--surface-2)}
+  :root[data-theme="dark"] .modal-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  :root[data-theme="dark"] .modal-row{background:var(--surface);border-color:var(--border)}
+  :root[data-theme="dark"] .modal-row .margin-tag{color:var(--margin)}
+  :root[data-theme="dark"] .modal-row .status-mini{background:rgba(255,138,61,.18);color:#fdba74}
+  :root[data-theme="dark"] .modal-row .status-mini.declared{background:rgba(16,185,129,.20);color:#6ee7b7}
+  :root[data-theme="dark"] .summary-tile{background:var(--surface-2);border-color:var(--border)}
+  :root[data-theme="dark"] .modal-row .ac-meta .opp{color:var(--muted)}
+  :root[data-theme="dark"] .alliance-legend span:hover{background:var(--surface-2);color:var(--text)}
+  :root[data-theme="dark"] .lead-party,
+  :root[data-theme="dark"] .ac-name{color:var(--text)}
+  :root[data-theme="dark"] .cand .pc{color:var(--margin)}
+  :root[data-theme="dark"] .cand.highlight{background:rgba(251,191,36,.12)}
+  :root[data-theme="dark"] .err{color:#fca5a5}
+  /* Mobile AC stacked rows in dark */
+  @media(max-width:760px){
+    :root[data-theme="dark"] tbody tr.ac-row,
+    :root[data-theme="dark"] tbody tr.ac-row:hover,
+    :root[data-theme="dark"] tbody tr.ac-row.open{background:var(--surface)}
+    :root[data-theme="dark"] tbody tr.ac-row td:nth-child(1){background:var(--surface-2);color:var(--muted)}
+    :root[data-theme="dark"] tbody tr.ac-row td:nth-child(5){border-top-color:var(--dash)}
+    :root[data-theme="dark"] tbody tr.ac-row td:nth-child(7){color:var(--margin)}
+    :root[data-theme="dark"] .detail-inner{background:var(--surface-3)}
+    :root[data-theme="dark"] .hero-stat{background:var(--surface-2)}
+  }
+  @media(hover:none){
+    :root[data-theme="dark"] tbody tr.ac-row:hover{background:var(--surface)}
+  }
 
   /* Kerala map modal — premium */
   .map-backdrop{
@@ -583,6 +710,10 @@
           <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14"/><path d="M15 6v14"/>
         </svg>
         <span>Kerala Map</span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
       <div class="pill"><span class="live-dot" style="background:#64748b;animation:none"></span><span id="liveStatus">FINAL</span></div>
       <div class="pill">Last update: <span id="lastUpdated" style="color:var(--text);margin-left:6px">—</span></div>
@@ -1353,6 +1484,22 @@ function closeKeralaMap(){
 }
 document.getElementById("mapTrigger")?.addEventListener("click", openKeralaMap);
 document.getElementById("mapModalClose")?.addEventListener("click", closeKeralaMap);
+
+/* ---------- Theme toggle ---------- */
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  try{ localStorage.setItem("theme", t); }catch(e){}
+  // Repaint Chart.js charts so axis/legend colors track the theme.
+  try{
+    if (window.Chart && Chart.instances){
+      Object.values(Chart.instances).forEach(c => c.update && c.update("none"));
+    }
+  }catch(e){}
+}
+document.getElementById("themeToggle")?.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
 document.getElementById("mapModal")?.addEventListener("click", e => {
   if (e.target.id === "mapModal") closeKeralaMap();
 });
