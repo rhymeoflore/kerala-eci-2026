@@ -422,31 +422,148 @@
     .modal-row:hover{transform:none}
   }
 
-  /* Kerala map */
-  .map-card{position:relative;margin-top:16px;padding:18px}
-  .map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-  .map-head h3{margin:0}
-  .map-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-  .map-legend span{display:inline-flex;align-items:center;gap:6px}
-  .map-legend i{width:14px;height:14px;border-radius:3px;display:inline-block}
-  #keralaMap{
-    width:100%;height:560px;border-radius:14px;
-    background:linear-gradient(180deg,#eef4fb,#dde7f3);
-    border:1px solid var(--border);
-    box-shadow:inset 0 1px 2px rgba(15,23,42,.04);
+  /* Kerala map trigger button */
+  .map-trigger{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 14px;border-radius:999px;cursor:pointer;
+    font:600 12px/1 'Inter',system-ui,sans-serif;letter-spacing:.2px;
+    color:#fff;border:0;
+    background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 50%,#e63946 100%);
+    box-shadow:
+      0 8px 22px -8px rgba(99,102,241,.55),
+      0 2px 6px rgba(15,23,42,.10),
+      inset 0 1px 0 rgba(255,255,255,.30);
+    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
   }
-  .leaflet-container{background:transparent !important;font-family:'Inter',system-ui,sans-serif}
+  .map-trigger svg{opacity:.95}
+  .map-trigger:hover{transform:translateY(-1px);filter:brightness(1.06);
+    box-shadow:0 14px 30px -10px rgba(99,102,241,.65), 0 3px 8px rgba(15,23,42,.14), inset 0 1px 0 rgba(255,255,255,.35);}
+  .map-trigger:active{transform:translateY(0);filter:brightness(.96)}
+  .map-trigger:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+  /* Kerala map modal — premium */
+  .map-backdrop{
+    position:fixed;inset:0;z-index:80;
+    background:radial-gradient(1200px 700px at 50% 0%, rgba(14,165,233,.18), transparent 55%),
+               radial-gradient(900px 600px at 90% 100%, rgba(230,57,70,.14), transparent 55%),
+               rgba(8,12,24,.62);
+    backdrop-filter:blur(14px) saturate(120%);
+    -webkit-backdrop-filter:blur(14px) saturate(120%);
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .map-backdrop.show{opacity:1;pointer-events:auto}
+  .map-backdrop[hidden]{display:none}
+  .map-shell{
+    position:relative;
+    width:min(1200px, 96vw);height:min(800px, 92vh);
+    border-radius:22px;overflow:hidden;
+    background:linear-gradient(180deg,#0b1224 0%,#0f172a 60%,#0b1224 100%);
+    border:1px solid rgba(148,163,184,.18);
+    box-shadow:
+      0 60px 120px -40px rgba(2,6,23,.85),
+      0 24px 60px -20px rgba(14,165,233,.30),
+      inset 0 1px 0 rgba(255,255,255,.05);
+    transform:translateY(16px) scale(.985);
+    opacity:0;
+    transition:transform .35s cubic-bezier(.2,.7,.2,1), opacity .25s ease;
+    display:flex;flex-direction:column;
+  }
+  .map-backdrop.show .map-shell{transform:translateY(0) scale(1);opacity:1}
+  .map-glow{
+    position:absolute;inset:-1px;border-radius:22px;pointer-events:none;
+    background:
+      radial-gradient(600px 220px at 20% -10%, rgba(14,165,233,.30), transparent 60%),
+      radial-gradient(600px 220px at 80% 110%, rgba(230,57,70,.22), transparent 60%);
+    mix-blend-mode:screen;opacity:.9;
+  }
+  .map-shell-head{
+    position:relative;z-index:2;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding:18px 22px;
+    border-bottom:1px solid rgba(148,163,184,.12);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0));
+  }
+  .map-shell-title{display:flex;flex-direction:column;gap:4px}
+  .map-shell-eyebrow{
+    font:600 10.5px/1 'Inter',system-ui,sans-serif;letter-spacing:.18em;
+    text-transform:uppercase;color:#7dd3fc;
+  }
+  .map-shell-title h2{
+    margin:0;color:#f8fafc;font-size:18px;font-weight:700;letter-spacing:.1px;
+  }
+  .map-shell-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .map-legend-pill{
+    display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:8px 14px;border-radius:999px;
+    background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18);
+    font:500 12px/1 'Inter',system-ui,sans-serif;color:#cbd5e1;
+    backdrop-filter:blur(8px);
+  }
+  .map-legend-pill span{display:inline-flex;align-items:center;gap:6px}
+  .map-legend-pill i{width:10px;height:10px;border-radius:3px;display:inline-block;box-shadow:0 0 0 1px rgba(255,255,255,.10)}
+  .map-legend-pill b{color:#f1f5f9;font-weight:700;margin-left:2px;font-variant-numeric:tabular-nums}
+  .map-shell-close{
+    width:38px;height:38px;display:grid;place-items:center;
+    border-radius:50%;border:1px solid rgba(148,163,184,.20);
+    background:rgba(15,23,42,.55);color:#e2e8f0;cursor:pointer;
+    transition:transform .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .map-shell-close:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45);color:#fecaca;transform:rotate(90deg)}
+  .map-shell-close:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+
+  .map-shell-body{
+    position:relative;flex:1;
+    margin:14px;border-radius:16px;overflow:hidden;
+    background:radial-gradient(800px 500px at 50% -10%, #18233f, #0b1224 70%);
+    border:1px solid rgba(148,163,184,.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  #keralaMap{position:absolute;inset:0;background:transparent}
+  .leaflet-container{background:transparent !important;font-family:'Inter',system-ui,sans-serif;outline:none}
+  .leaflet-control-zoom{
+    border:1px solid rgba(148,163,184,.20) !important;
+    box-shadow:0 8px 22px rgba(2,6,23,.5) !important;border-radius:10px !important;
+    overflow:hidden;
+  }
+  .leaflet-control-zoom a{
+    background:rgba(15,23,42,.85) !important;color:#e2e8f0 !important;
+    border-bottom:1px solid rgba(148,163,184,.15) !important;
+    backdrop-filter:blur(6px);
+  }
+  .leaflet-control-zoom a:hover{background:rgba(30,41,59,.95) !important;color:#fff !important}
   .leaflet-tooltip.ac-tip{
-    background:#0f172aee;color:#fff;border:0;padding:8px 10px;border-radius:8px;
-    font-size:12px;line-height:1.45;box-shadow:0 8px 22px rgba(15,23,42,.30);
+    background:rgba(15,23,42,.96);color:#f8fafc;border:1px solid rgba(148,163,184,.22);
+    padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.5;
+    box-shadow:0 18px 40px rgba(2,6,23,.55);backdrop-filter:blur(8px);
   }
-  .leaflet-tooltip.ac-tip:before{border-top-color:#0f172aee}
+  .leaflet-tooltip.ac-tip:before{display:none}
   .ac-tip b{color:#fff}
-  .ac-tip .tip-meta{color:#cbd5e1;font-size:11px}
-  .ac-tip .tip-margin{color:#fbbf24;font-weight:600}
+  .ac-tip .tip-meta{color:#94a3b8;font-size:11px}
+  .ac-tip .tip-margin{color:#fbbf24;font-weight:700}
+
+  .map-shell-hint{
+    position:absolute;left:14px;bottom:12px;z-index:2;
+    padding:6px 12px;border-radius:999px;
+    background:rgba(15,23,42,.65);border:1px solid rgba(148,163,184,.18);
+    font:500 11px/1 'Inter',system-ui,sans-serif;color:#cbd5e1;letter-spacing:.2px;
+    backdrop-filter:blur(8px);
+    transition:opacity .25s ease;
+  }
+  body.map-open{overflow:hidden}
+
   @media(max-width:640px){
-    #keralaMap{height:440px}
-    .map-card{padding:14px}
+    .map-backdrop{padding:0}
+    .map-shell{width:100vw;height:100vh;border-radius:0}
+    .map-shell-head{padding:14px 14px}
+    .map-shell-title h2{font-size:15px}
+    .map-shell-eyebrow{font-size:10px}
+    .map-legend-pill{padding:6px 10px;gap:10px;font-size:11px}
+    .map-shell-body{margin:10px;border-radius:12px}
+    .map-trigger span{display:none}
+    .map-trigger{padding:8px 10px}
   }
 </style>
 </head>
@@ -461,6 +578,12 @@
       </div>
     </div>
     <div class="meta">
+      <button class="map-trigger" id="mapTrigger" type="button" aria-label="Open Kerala map">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14"/><path d="M15 6v14"/>
+        </svg>
+        <span>Kerala Map</span>
+      </button>
       <div class="pill"><span class="live-dot" style="background:#64748b;animation:none"></span><span id="liveStatus">FINAL</span></div>
       <div class="pill">Last update: <span id="lastUpdated" style="color:var(--text);margin-left:6px">—</span></div>
       <div class="pill" id="refreshPill" style="cursor:default">Auto-refresh disabled</div>
@@ -519,24 +642,6 @@
     </div>
   </div>
 
-  <!-- Kerala map -->
-  <div class="card map-card">
-    <div class="map-head">
-      <div>
-        <h3>Kerala Map <span class="hint">Click any constituency to drill down</span></h3>
-      </div>
-      <div class="map-legend" id="mapLegend">
-        <span><i style="background:#19a3e0"></i>UDF</span>
-        <span><i style="background:#e63946"></i>LDF</span>
-        <span><i style="background:#ff8a3d"></i>NDA</span>
-        <span><i style="background:#9aa3b2"></i>Others</span>
-        <span style="margin-left:8px;color:#94a3b8">·</span>
-        <span id="mapStatus" style="color:#94a3b8">Loading boundaries…</span>
-      </div>
-    </div>
-    <div id="keralaMap" role="img" aria-label="Map of Kerala assembly constituencies"></div>
-  </div>
-
   <!-- Constituency table -->
   <div class="card" style="margin-top:16px">
     <h3>Constituency-wise In-Depth <span class="hint">Click any row for full candidate breakdown</span></h3>
@@ -579,6 +684,34 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Kerala map modal (premium) -->
+<div class="map-backdrop" id="mapModal" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle" hidden>
+  <div class="map-shell" role="document">
+    <div class="map-glow"></div>
+    <header class="map-shell-head">
+      <div class="map-shell-title">
+        <span class="map-shell-eyebrow">Geographic View</span>
+        <h2 id="mapModalTitle">Kerala · 140 Assembly Constituencies</h2>
+      </div>
+      <div class="map-shell-actions">
+        <div class="map-legend-pill" aria-hidden="true">
+          <span><i style="background:#19a3e0"></i>UDF <b id="mapLegUDF">0</b></span>
+          <span><i style="background:#e63946"></i>LDF <b id="mapLegLDF">0</b></span>
+          <span><i style="background:#ff8a3d"></i>NDA <b id="mapLegNDA">0</b></span>
+          <span><i style="background:#9aa3b2"></i>Others <b id="mapLegOTH">0</b></span>
+        </div>
+        <button class="map-shell-close" id="mapModalClose" aria-label="Close map" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="map-shell-body">
+      <div id="keralaMap" role="img" aria-label="Map of Kerala assembly constituencies"></div>
+      <div class="map-shell-hint" id="mapShellHint">Hover any constituency · click to open the full breakdown</div>
+    </div>
+  </div>
+</div>
 
 <!-- Alliance drill-down modal -->
 <div class="modal-backdrop" id="allianceModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -1097,18 +1230,19 @@ function _acTipHTML(r){
 
 function _styleFor(no){
   const r = allACs.find(a => a.no === no);
-  if (!r) return {fillColor:"#cbd5e1", color:"#94a3b8", weight:0.6, fillOpacity:0.55};
+  if (!r) return {fillColor:"#1e293b", color:"rgba(148,163,184,.30)", weight:0.7, fillOpacity:0.55};
   const a = allianceOf(r.leadParty);
   const decl = /declared/i.test(r.status);
   return {
-    fillColor: ALLIANCE_COLOR[a] || "#9aa3b2",
-    color: "#ffffff",
-    weight: 0.8,
-    fillOpacity: decl ? 0.85 : 0.62
+    fillColor: ALLIANCE_COLOR[a] || "#64748b",
+    color: "rgba(15,23,42,.85)",
+    weight: 0.9,
+    fillOpacity: decl ? 0.92 : 0.70
   };
 }
 
 function _openACFromMap(no){
+  closeKeralaMap();
   openACs.add(no);
   renderTable();
   requestAnimationFrame(() => {
@@ -1120,15 +1254,23 @@ function _openACFromMap(no){
   });
 }
 
+function _updateMapLegendCounts(){
+  const tally = {UDF:0, LDF:0, NDA:0, Others:0};
+  allACs.forEach(r => { tally[allianceOf(r.leadParty)]++; });
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set("mapLegUDF", tally.UDF);
+  set("mapLegLDF", tally.LDF);
+  set("mapLegNDA", tally.NDA);
+  set("mapLegOTH", tally.Others);
+}
+
 async function initKeralaMap(){
   if (_keralaMap || _keralaLoading) return;
   if (typeof L === "undefined"){
-    // Leaflet hasn't finished loading yet — try again shortly.
     setTimeout(initKeralaMap, 150);
     return;
   }
   _keralaLoading = true;
-  const status = document.getElementById("mapStatus");
   try {
     const r = await fetch("data/kerala-ac.geojson", {cache:"force-cache"});
     if (!r.ok) throw new Error("HTTP "+r.status);
@@ -1137,11 +1279,13 @@ async function initKeralaMap(){
     _keralaMap = L.map("keralaMap", {
       zoomControl: true,
       attributionControl: false,
-      scrollWheelZoom: false,    // page scrolls until user zooms in deliberately
+      scrollWheelZoom: true,
       doubleClickZoom: true,
       boxZoom: false,
       keyboard: false,
-      minZoom: 6, maxZoom: 12
+      zoomSnap: 0.25,
+      minZoom: 6, maxZoom: 12,
+      preferCanvas: false
     });
 
     _keralaLayer = L.geoJSON(gj, {
@@ -1153,24 +1297,20 @@ async function initKeralaMap(){
           const row = allACs.find(a => a.no === no);
           if (!row) return `<b>${escapeHTML(feature.properties.AC_NAME || "AC "+no)}</b> <span class="tip-meta">#${no}</span>`;
           return _acTipHTML(row);
-        }, {className:"ac-tip", sticky:true, direction:"top"});
+        }, {className:"ac-tip", sticky:true, direction:"top", offset:[0,-4]});
         layer.on({
-          mouseover: e => e.target.setStyle({weight:2, color:"#0f172a", fillOpacity:0.95}),
+          mouseover: e => e.target.setStyle({weight:2.4, color:"#f8fafc", fillOpacity:0.98}).bringToFront(),
           mouseout: () => _keralaLayer.resetStyle(layer),
           click: () => _openACFromMap(no)
         });
       }
     }).addTo(_keralaMap);
 
-    // Re-enable scroll-zoom once the user clicks/touches the map.
-    _keralaMap.on("focus click", () => _keralaMap.scrollWheelZoom.enable());
-    _keralaMap.on("blur", () => _keralaMap.scrollWheelZoom.disable());
-
-    _keralaMap.fitBounds(_keralaLayer.getBounds(), {padding:[10,10]});
-    if (status) status.textContent = `${gj.features.length} constituencies`;
+    _keralaMap.fitBounds(_keralaLayer.getBounds(), {padding:[18,18]});
   } catch (e){
     console.warn("kerala map init failed", e);
-    if (status) status.textContent = "Map unavailable";
+    const hint = document.getElementById("mapShellHint");
+    if (hint) hint.textContent = "Map data unavailable.";
   } finally {
     _keralaLoading = false;
   }
@@ -1179,7 +1319,46 @@ async function initKeralaMap(){
 function refreshKeralaMap(){
   if (!_keralaLayer) return;
   _keralaByNo.forEach((layer, no) => layer.setStyle(_styleFor(no)));
+  _updateMapLegendCounts();
 }
+
+/* ---------- Map modal open/close ---------- */
+function openKeralaMap(){
+  const m = document.getElementById("mapModal");
+  if (!m) return;
+  m.hidden = false;
+  document.body.classList.add("map-open");
+  // Force reflow so the transition runs.
+  void m.offsetWidth;
+  m.classList.add("show");
+  _updateMapLegendCounts();
+  // Init lazily — first open only.
+  initKeralaMap().then(() => {
+    // Ensure Leaflet recalculates dimensions after the modal becomes visible.
+    setTimeout(() => {
+      if (_keralaMap){
+        _keralaMap.invalidateSize();
+        if (_keralaLayer) _keralaMap.fitBounds(_keralaLayer.getBounds(), {padding:[18,18]});
+      }
+      refreshKeralaMap();
+    }, 280);
+  });
+}
+function closeKeralaMap(){
+  const m = document.getElementById("mapModal");
+  if (!m) return;
+  m.classList.remove("show");
+  document.body.classList.remove("map-open");
+  setTimeout(() => { m.hidden = true; }, 260);
+}
+document.getElementById("mapTrigger")?.addEventListener("click", openKeralaMap);
+document.getElementById("mapModalClose")?.addEventListener("click", closeKeralaMap);
+document.getElementById("mapModal")?.addEventListener("click", e => {
+  if (e.target.id === "mapModal") closeKeralaMap();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !document.getElementById("mapModal").hidden) closeKeralaMap();
+});
 
 function buildFilterChips(){
   const chips = document.getElementById("filterChips");
@@ -1661,9 +1840,7 @@ ensureCharts();
     paintFromCache();
     refreshAll();
   }
-  // Bring up the Kerala map after data has been hydrated so polygons get
-  // tinted on first paint (initKeralaMap waits for Leaflet to load).
-  initKeralaMap();
+  // Map is initialised lazily on first open (see openKeralaMap).
 })();
 </script>
 </body>
