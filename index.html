@@ -360,11 +360,20 @@
     .brand .logo{width:38px;height:38px;border-radius:10px;font-size:15px}
     .sub{font-size:11px}
     .meta{gap:8px;width:100%;justify-content:flex-start;align-items:center}
-    .pill{height:28px;padding:0 10px;font-size:11px}
-    .map-trigger{height:28px;padding:0 12px;font-size:11px;letter-spacing:.1px}
-    .map-trigger svg{width:13px;height:13px}
-    .theme-toggle{width:28px;height:28px}
-    .theme-toggle svg{width:14px;height:14px}
+    .pill{height:28px;padding:0 10px;font-size:11px;order:2}
+    /* Map trigger — promote to full-width hero CTA on mobile so it's clearly visible. */
+    .map-trigger{
+      order:1;flex:1 0 100%;
+      height:44px;padding:0 18px;font-size:13px;letter-spacing:.3px;
+      justify-content:center;
+      box-shadow:
+        0 14px 32px -10px rgba(99,102,241,.55),
+        0 4px 10px rgba(15,23,42,.16),
+        inset 0 1px 0 rgba(255,255,255,.30);
+    }
+    .map-trigger svg{width:16px;height:16px}
+    .theme-toggle{width:32px;height:32px;order:3;margin-left:auto}
+    .theme-toggle svg{width:15px;height:15px}
 
     .card{padding:14px;border-radius:14px}
     .card h3{font-size:11px;letter-spacing:1.1px}
@@ -689,8 +698,6 @@
     .map-shell-eyebrow{font-size:10px}
     .map-legend-pill{padding:6px 10px;gap:10px;font-size:11px}
     .map-shell-body{margin:10px;border-radius:12px}
-    .map-trigger span{display:none}
-    .map-trigger{padding:8px 10px}
   }
 </style>
 </head>
