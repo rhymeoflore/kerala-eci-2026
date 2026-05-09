@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
   :root{
     --bg:#f5f7fb;
@@ -417,6 +421,33 @@
     tbody tr.ac-row:hover{background:#ffffff}
     .modal-row:hover{transform:none}
   }
+
+  /* Kerala map */
+  .map-card{position:relative;margin-top:16px;padding:18px}
+  .map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .map-head h3{margin:0}
+  .map-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .map-legend span{display:inline-flex;align-items:center;gap:6px}
+  .map-legend i{width:14px;height:14px;border-radius:3px;display:inline-block}
+  #keralaMap{
+    width:100%;height:560px;border-radius:14px;
+    background:linear-gradient(180deg,#eef4fb,#dde7f3);
+    border:1px solid var(--border);
+    box-shadow:inset 0 1px 2px rgba(15,23,42,.04);
+  }
+  .leaflet-container{background:transparent !important;font-family:'Inter',system-ui,sans-serif}
+  .leaflet-tooltip.ac-tip{
+    background:#0f172aee;color:#fff;border:0;padding:8px 10px;border-radius:8px;
+    font-size:12px;line-height:1.45;box-shadow:0 8px 22px rgba(15,23,42,.30);
+  }
+  .leaflet-tooltip.ac-tip:before{border-top-color:#0f172aee}
+  .ac-tip b{color:#fff}
+  .ac-tip .tip-meta{color:#cbd5e1;font-size:11px}
+  .ac-tip .tip-margin{color:#fbbf24;font-weight:600}
+  @media(max-width:640px){
+    #keralaMap{height:440px}
+    .map-card{padding:14px}
+  }
 </style>
 </head>
 <body>
@@ -486,6 +517,24 @@
       <h3>Vote-Bar Trend</h3>
       <canvas id="barChart" height="220"></canvas>
     </div>
+  </div>
+
+  <!-- Kerala map -->
+  <div class="card map-card">
+    <div class="map-head">
+      <div>
+        <h3>Kerala Map <span class="hint">Click any constituency to drill down</span></h3>
+      </div>
+      <div class="map-legend" id="mapLegend">
+        <span><i style="background:#19a3e0"></i>UDF</span>
+        <span><i style="background:#e63946"></i>LDF</span>
+        <span><i style="background:#ff8a3d"></i>NDA</span>
+        <span><i style="background:#9aa3b2"></i>Others</span>
+        <span style="margin-left:8px;color:#94a3b8">·</span>
+        <span id="mapStatus" style="color:#94a3b8">Loading boundaries…</span>
+      </div>
+    </div>
+    <div id="keralaMap" role="img" aria-label="Map of Kerala assembly constituencies"></div>
   </div>
 
   <!-- Constituency table -->
@@ -1024,6 +1073,112 @@ function renderTable(){
   });
   // Restore scroll after the DOM rewrite.
   window.scrollTo(0, _scrollY);
+  // Re-tint the map (cheap; just style changes once layer is built).
+  if (typeof refreshKeralaMap === "function") refreshKeralaMap();
+}
+
+/* ---------- Kerala map ---------- */
+let _keralaMap = null;
+let _keralaLayer = null;
+let _keralaByNo = new Map(); // AC_NO -> Leaflet layer
+let _keralaLoading = false;
+
+function _acTipHTML(r){
+  const c = PARTY_COLORS[r.leadParty] || "#9aa3b2";
+  const decl = /declared/i.test(r.status) ? " · declared" : "";
+  return `
+    <b>${escapeHTML(r.ac)}</b> <span class="tip-meta">#${r.no}</span><br>
+    <i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:5px"></i>
+    ${escapeHTML(r.leadCand)} <span class="tip-meta">(${shortParty(r.leadParty)})</span><br>
+    <span class="tip-meta">vs ${escapeHTML(r.trailCand)} (${shortParty(r.trailParty)})</span><br>
+    <span class="tip-margin">+${r.margin.toLocaleString("en-IN")}</span>
+    <span class="tip-meta">· ${escapeHTML(r.round)}${decl}</span>`;
+}
+
+function _styleFor(no){
+  const r = allACs.find(a => a.no === no);
+  if (!r) return {fillColor:"#cbd5e1", color:"#94a3b8", weight:0.6, fillOpacity:0.55};
+  const a = allianceOf(r.leadParty);
+  const decl = /declared/i.test(r.status);
+  return {
+    fillColor: ALLIANCE_COLOR[a] || "#9aa3b2",
+    color: "#ffffff",
+    weight: 0.8,
+    fillOpacity: decl ? 0.85 : 0.62
+  };
+}
+
+function _openACFromMap(no){
+  openACs.add(no);
+  renderTable();
+  requestAnimationFrame(() => {
+    const tr = document.querySelector(`tr.ac-row[data-no="${no}"]`);
+    if (tr) tr.scrollIntoView({behavior:"smooth", block:"center"});
+    if (!candidatesByAC.has(no)){
+      loadACDetails(no).then(renderTable).catch(()=>{});
+    }
+  });
+}
+
+async function initKeralaMap(){
+  if (_keralaMap || _keralaLoading) return;
+  if (typeof L === "undefined"){
+    // Leaflet hasn't finished loading yet — try again shortly.
+    setTimeout(initKeralaMap, 150);
+    return;
+  }
+  _keralaLoading = true;
+  const status = document.getElementById("mapStatus");
+  try {
+    const r = await fetch("data/kerala-ac.geojson", {cache:"force-cache"});
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    const gj = await r.json();
+
+    _keralaMap = L.map("keralaMap", {
+      zoomControl: true,
+      attributionControl: false,
+      scrollWheelZoom: false,    // page scrolls until user zooms in deliberately
+      doubleClickZoom: true,
+      boxZoom: false,
+      keyboard: false,
+      minZoom: 6, maxZoom: 12
+    });
+
+    _keralaLayer = L.geoJSON(gj, {
+      style: f => _styleFor(f.properties.AC_NO),
+      onEachFeature: (feature, layer) => {
+        const no = feature.properties.AC_NO;
+        _keralaByNo.set(no, layer);
+        layer.bindTooltip(() => {
+          const row = allACs.find(a => a.no === no);
+          if (!row) return `<b>${escapeHTML(feature.properties.AC_NAME || "AC "+no)}</b> <span class="tip-meta">#${no}</span>`;
+          return _acTipHTML(row);
+        }, {className:"ac-tip", sticky:true, direction:"top"});
+        layer.on({
+          mouseover: e => e.target.setStyle({weight:2, color:"#0f172a", fillOpacity:0.95}),
+          mouseout: () => _keralaLayer.resetStyle(layer),
+          click: () => _openACFromMap(no)
+        });
+      }
+    }).addTo(_keralaMap);
+
+    // Re-enable scroll-zoom once the user clicks/touches the map.
+    _keralaMap.on("focus click", () => _keralaMap.scrollWheelZoom.enable());
+    _keralaMap.on("blur", () => _keralaMap.scrollWheelZoom.disable());
+
+    _keralaMap.fitBounds(_keralaLayer.getBounds(), {padding:[10,10]});
+    if (status) status.textContent = `${gj.features.length} constituencies`;
+  } catch (e){
+    console.warn("kerala map init failed", e);
+    if (status) status.textContent = "Map unavailable";
+  } finally {
+    _keralaLoading = false;
+  }
+}
+
+function refreshKeralaMap(){
+  if (!_keralaLayer) return;
+  _keralaByNo.forEach((layer, no) => layer.setStyle(_styleFor(no)));
 }
 
 function buildFilterChips(){
@@ -1506,6 +1661,9 @@ ensureCharts();
     paintFromCache();
     refreshAll();
   }
+  // Bring up the Kerala map after data has been hydrated so polygons get
+  // tinted on first paint (initKeralaMap waits for Leaflet to load).
+  initKeralaMap();
 })();
 </script>
 </body>
